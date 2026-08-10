@@ -20,11 +20,11 @@ import {
   type UiHoverState,
   type ViewTransform,
 } from '../render/canvasRenderer'
-import { useCanvasInteraction, type CanvasInteractionEvent } from '../composables/useCanvasInteraction'
+import { useCanvasInteraction } from '../composables/useCanvasInteraction'
 
 const emit = defineEmits<{
-  (e: 'edit-node', id: string): void
-  (e: 'edit-edge', id: string): void
+  'edit-node': [id: string]
+  'edit-edge': [id: string]
 }>()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -38,7 +38,10 @@ const hover = reactive<UiHoverState>({
   draggingNodeId: null,
 })
 
-const handlers = useCanvasInteraction(canvasRef, view, hover, (ev: CanvasInteractionEvent, id: string) => emit(ev, id))
+const handlers = useCanvasInteraction(canvasRef, view, hover, (ev, id) => {
+  if (ev === 'edit-node') emit('edit-node', id)
+  else emit('edit-edge', id)
+})
 
 let ctx: CanvasRenderingContext2D | null = null
 let raf = 0

@@ -23,7 +23,7 @@ export function useCanvasInteraction(
 
   const THRESHOLD = 4
 
-  function localPos(e: MouseEvent) {
+  function localPos(_e?: MouseEvent) {
     const rect = canvasRef.value!.getBoundingClientRect()
     return { mx: e.clientX - rect.left, my: e.clientY - rect.top }
   }
