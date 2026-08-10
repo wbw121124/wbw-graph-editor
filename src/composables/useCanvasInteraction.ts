@@ -25,7 +25,7 @@ export function useCanvasInteraction(
 
   function localPos(_e?: MouseEvent) {
     const rect = canvasRef.value!.getBoundingClientRect()
-    return { mx: e.clientX - rect.left, my: e.clientY - rect.top }
+    return { mx: _e ? _e.clientX - rect.left : 0, my: _e ? _e.clientY - rect.top : 0 }
   }
 
   function hitTest(mx: number, my: number) {
