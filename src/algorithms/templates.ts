@@ -10,7 +10,7 @@ export const ALGO_TEMPLATES: AlgoTemplate[] = [
     name: 'BFS 遍历模板',
     code: `// 可用对象：
 // G —— 只读图 API：G.nodes() / G.neighbors(u) / G.edge(u,v) / G.label(u) ...
-// api —— 可视化 API：api.emit(事件) / await api.step() / api.log(msg) / api.done(msg)
+// api —— 可视化 API：api.emit(事件) / api.step() / api.log(msg) / api.done(msg)
 
 async function solve() {
   const vis = new Set();
@@ -20,7 +20,7 @@ async function solve() {
     vis.add(start);
     q.push(start);
     api.emit({ type: 'visit', node: start });
-    await api.step();
+    api.step();
     while (q.length) {
       const u = q.shift();
       api.emit({ type: 'current', node: u });
@@ -30,7 +30,7 @@ async function solve() {
         q.push(v);
         api.emit({ type: 'visit', node: v });
         api.emit({ type: 'setEdgeColor', edge: edge.id, color: '#66bb6a' });
-        await api.step();
+        api.step();
       }
     }
   }
@@ -50,15 +50,15 @@ solve();
     vis.add(u);
     api.emit({ type: 'visit', node: u });
     api.emit({ type: 'current', node: u });
-    await api.step();
+    api.step();
     for (const { node: v, edge } of G.neighbors(u)) {
       if (vis.has(v)) continue;
       api.emit({ type: 'setEdgeColor', edge: edge.id, color: '#66bb6a' });
-      await dfs(v);
+      dfs(v);
     }
   }
   for (const u of G.nodes()) {
-    if (!vis.has(u)) await dfs(u);
+    if (!vis.has(u)) dfs(u);
   }
   api.emit({ type: 'current', node: null });
   api.done('DFS 完成');
@@ -77,7 +77,7 @@ solve();
   for (const u of G.nodes()) dist.set(u, Infinity);
   dist.set(source, 0);
   api.emit({ type: 'setNodeValue', node: source, text: '0' });
-  await api.step();
+  api.step();
   const settled = new Set();
   while (true) {
     let u = null;
@@ -87,7 +87,7 @@ solve();
     if (u === null || dist.get(u) === Infinity) break;
     settled.add(u);
     api.emit({ type: 'current', node: u });
-    await api.step();
+    api.step();
     for (const { node: v, edge } of G.neighbors(u)) {
       const w = edge.weight ?? 1;
       const nd = dist.get(u) + w;
@@ -96,7 +96,7 @@ solve();
         pred.set(v, u);
         api.emit({ type: 'setNodeValue', node: v, text: String(nd) });
         api.emit({ type: 'setEdgeColor', edge: edge.id, color: '#26c6da' });
-        await api.step();
+        api.step();
       }
     }
   }
@@ -126,10 +126,10 @@ solve();
     stack.push(u);
     inStack.add(u);
     api.emit({ type: 'current', node: u });
-    await api.step();
+    api.step();
     for (const { node: v } of G.neighbors(u)) {
       if (!dfn.has(v)) {
-        await dfs(v);
+        dfs(v);
         low.set(u, Math.min(low.get(u), low.get(v)));
       } else if (inStack.has(v)) {
         low.set(u, Math.min(low.get(u), dfn.get(v)));
@@ -147,11 +147,11 @@ solve();
       ci++;
       for (const w of comp) api.emit({ type: 'setNodeColor', node: w, color });
       api.log('分量 ' + ci + '：' + comp.map((w) => G.label(w)).join(', '));
-      await api.step();
+      api.step();
     }
   }
   for (const u of G.nodes()) {
-    if (!dfn.has(u)) await dfs(u);
+    if (!dfn.has(u)) dfs(u);
   }
   api.emit({ type: 'current', node: null });
   api.done('Tarjan 完成，共 ' + ci + ' 个分量');
@@ -180,7 +180,7 @@ solve();
     used.add(c);
     api.emit({ type: 'setEdgeColor', edge: e.id, color: ['#ef5350', '#42a5f5', '#66bb6a', '#ffca28', '#ab47bc', '#ff7043'][c % 6] });
     api.log('边 ' + G.label(e.from) + '-' + G.label(e.to) + ' 着色 ' + c);
-    await api.step();
+    api.step();
   }
   api.done('边着色完成，使用 ' + used.size + ' 种颜色');
 }

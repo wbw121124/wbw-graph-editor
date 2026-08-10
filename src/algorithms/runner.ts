@@ -13,7 +13,7 @@ export interface UserVisualAPI {
 
 export class AlgorithmRunner {
   status: AlgoStatus = 'idle'
-  auto = false
+  auto = ref(false)
   speed = ref(500)
   logs = ref<string[]>([])
   matrix = ref<MatrixData | null>(null)
@@ -75,7 +75,7 @@ export class AlgorithmRunner {
     }
     this.applyStep(r.value)
     if (r.value.pause) {
-      if (this.auto) {
+      if (this.auto.value) {
         this.timer = window.setTimeout(() => this.proceed(), this.speed.value)
       } else {
         this.status = 'paused'
@@ -143,7 +143,7 @@ export class AlgorithmRunner {
   }
 
   private scheduleResume() {
-    if (this.auto) {
+    if (this.auto.value) {
       this.timer = window.setTimeout(() => this.doResume(), this.speed.value)
     } else {
       this.status = 'paused'
@@ -168,7 +168,7 @@ export class AlgorithmRunner {
   }
 
   play() {
-    this.auto = true
+    this.auto.value = true
     if (this.status === 'paused') {
       this.doResume()
     } else if (this.status === 'running') {
@@ -177,13 +177,13 @@ export class AlgorithmRunner {
   }
 
   pause() {
-    this.auto = false
+    this.auto.value = false
     clearTimeout(this.timer)
     this.status = 'paused'
   }
 
   cancel() {
-    this.auto = false
+    this.auto.value = false
     clearTimeout(this.timer)
     this.pendingResolve = null
     this.gen = null
@@ -195,6 +195,7 @@ export class AlgorithmRunner {
   private finish(message?: string) {
     clearTimeout(this.timer)
     if (message !== undefined) this.doneMessage.value = message
+    else this.doneMessage.value = '已完成'
     this.gen = null
     this.pendingResolve = null
     this.status = 'done'

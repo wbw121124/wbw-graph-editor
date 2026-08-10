@@ -91,7 +91,7 @@ function sstFlow(adj: Map<string, Arc[]>, s: string, t: string): number {
           const pushed = dfs(a.v, Math.min(f, a.cap))
           if (pushed > 0) {
             a.cap -= pushed
-            adj.get(a.v)![a.rev].cap += pushed
+            a.rev.cap += pushed
             return pushed
           }
         }
@@ -143,7 +143,7 @@ export function* dinic(ctx: AlgoContext): Generator<AlgoStep> {
           const pushed = dfs(a.v, Math.min(f, a.cap))
           if (pushed > 0) {
             a.cap -= pushed
-            adj.get(a.v)![a.rev].cap += pushed
+            a.rev.cap += pushed
             return pushed
           }
         }
@@ -208,7 +208,7 @@ export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
         const pushed = aug(a.v, Math.min(f, a.cap))
         if (pushed > 0) {
           a.cap -= pushed
-          adj.get(a.v)![a.rev].cap += pushed
+          a.rev.cap += pushed
           return pushed
         }
       }
@@ -302,7 +302,7 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
           const pushed = pushToT(a.v, Math.min(f, a.cap), seen)
           if (pushed > 0) {
             a.cap -= pushed
-            adj.get(a.v)![a.rev].cap += pushed
+            a.rev.cap += pushed
             return pushed
           }
         }
@@ -314,7 +314,7 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
       if (seen.has(u)) return 0
       seen.add(u)
       for (const a of adj.get(u)!) {
-        const rev = adj.get(u)![a.rev]
+        const rev = a.rev
         if (allowed(u, rev) && rev.cap > 0) {
           const pushed = pullFromS(a.v, Math.min(f, rev.cap), seen)
           if (pushed > 0) {
@@ -378,7 +378,7 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
   for (const a of adj.get(s)!) {
     if (a.cap > 0) {
       a.cap = 0
-      adj.get(a.v)![a.rev].cap += a.origCap
+      a.rev.cap += a.origCap
       excess.set(a.v, excess.get(a.v)! + a.origCap)
     }
   }
@@ -389,7 +389,7 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
   yield evs([...flowEvents(adj, g.edges), ...overflow.map((id) => ({ type: 'setNodeValue' as const, node: id, text: `+${excess.get(id)}` })), { type: 'log', message: '源点推满预流' }], true)
   const push = (u: string, a: Arc, f: number) => {
     a.cap -= f
-    adj.get(a.v)![a.rev].cap += f
+    a.rev.cap += f
     excess.set(u, excess.get(u)! - f)
     excess.set(a.v, excess.get(a.v)! + f)
   }
@@ -487,7 +487,7 @@ export function* sspMinCostFlow(ctx: AlgoContext): Generator<AlgoStep> {
     }
     for (const a of path) {
       a.cap -= f
-      adj.get(a.v)![a.rev].cap += f
+      a.rev.cap += f
     }
     maxflow += f
     totalCost += f * dist.get(t)!
