@@ -21,6 +21,8 @@ import {
   type ViewTransform,
 } from '../render/canvasRenderer'
 import { useCanvasInteraction } from '../composables/useCanvasInteraction'
+import { layoutTick } from '../core/forceLayout'
+import { uiState } from '../store/ui'
 
 const emit = defineEmits<{
   'edit-node': [id: string]
@@ -73,7 +75,10 @@ function render() {
   drawScene(ctx, graphStore.graph, view, algoOverlay, hover, width, height)
 }
 
-function loop() {
+function loop(t = 0) {
+  if (uiState.mode === 'force') {
+    layoutTick(1)
+  }
   render()
   raf = requestAnimationFrame(loop)
 }
