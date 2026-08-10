@@ -2,6 +2,7 @@
   <div class="app" :class="`theme-${themeName}`">
     <header class="topbar">
       <span class="logo">图编辑器 Graph Editor</span>
+      <span class="sub">图论可视化 · 算法演示 · 自定义算法</span>
       <div class="spacer"></div>
       <button :disabled="!graphStore.canUndo" @click="graphStore.undo()">撤销</button>
       <button :disabled="!graphStore.canRedo" @click="graphStore.redo()">重做</button>
@@ -12,18 +13,40 @@
       <LeftPanel />
 
       <div class="canvas-wrap">
-        <GraphCanvas ref="canvasRef" @edit-node="uiState.editingNodeId = $event" @edit-edge="uiState.editingEdgeId = $event" />
+        <GraphCanvas
+          ref="canvasRef"
+          @edit-node="uiState.editingNodeId = $event"
+          @edit-edge="uiState.editingEdgeId = $event"
+        />
       </div>
 
       <aside class="side">
-        <ModeToolbar />
-        <ConfigPanel />
-        <CommandPanel :canvas="canvasRef" />
+        <div class="tabs">
+          <button :class="{ active: uiState.sideTab === 'algo' }" @click="uiState.sideTab = 'algo'">算法</button>
+          <button :class="{ active: uiState.sideTab === 'custom' }" @click="uiState.sideTab = 'custom'">自定义</button>
+          <button :class="{ active: uiState.sideTab === 'edit' }" @click="uiState.sideTab = 'edit'">编辑</button>
+        </div>
+        <template v-if="uiState.sideTab === 'algo'">
+          <AlgoPanel />
+          <AlgoControlBar />
+          <AlgoLog />
+        </template>
+        <template v-else-if="uiState.sideTab === 'custom'">
+          <AlgorithmEditor />
+          <AlgoControlBar />
+          <AlgoLog />
+        </template>
+        <template v-else>
+          <ModeToolbar />
+          <ConfigPanel />
+          <CommandPanel :canvas="canvasRef" />
+        </template>
       </aside>
     </main>
 
     <EditDialogs />
     <MarkupDialog />
+    <MatrixDialog />
   </div>
 </template>
 
@@ -36,6 +59,11 @@ import ConfigPanel from './components/ConfigPanel.vue'
 import CommandPanel from './components/CommandPanel.vue'
 import EditDialogs from './components/EditDialogs.vue'
 import MarkupDialog from './components/MarkupDialog.vue'
+import AlgoPanel from './components/AlgoPanel.vue'
+import AlgoControlBar from './components/AlgoControlBar.vue'
+import AlgoLog from './components/AlgoLog.vue'
+import AlgorithmEditor from './components/AlgorithmEditor.vue'
+import MatrixDialog from './components/MatrixDialog.vue'
 import { graphStore } from './store/graphStore'
 import { themeName, toggleTheme } from './store/theme'
 import { uiState } from './store/ui'
@@ -69,6 +97,11 @@ const canvasRef = ref<InstanceType<typeof GraphCanvas> | null>(null)
   letter-spacing: 0.5px;
 }
 
+.sub {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .spacer {
   flex: 1;
 }
@@ -87,14 +120,38 @@ const canvasRef = ref<InstanceType<typeof GraphCanvas> | null>(null)
 }
 
 .side {
-  width: 252px;
+  width: 270px;
   flex-shrink: 0;
   overflow-y: auto;
   background: var(--panel);
   border-left: 1px solid var(--border);
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.tabs button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 5px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.tabs button.active {
+  background: var(--accent);
+  color: #fff;
 }
 </style>

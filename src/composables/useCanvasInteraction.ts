@@ -13,6 +13,7 @@ export function useCanvasInteraction(
   emit: (event: CanvasInteractionEvent, id: string) => void,
 ) {
   let action: 'none' | 'pan' | 'drag' = 'none'
+  let mouseDown = false
   let draggingNodeId: string | null = null
   let downScreenX = 0
   let downScreenY = 0
@@ -23,9 +24,9 @@ export function useCanvasInteraction(
 
   const THRESHOLD = 4
 
-  function localPos(_e?: MouseEvent) {
+  function localPos(e: MouseEvent) {
     const rect = canvasRef.value!.getBoundingClientRect()
-    return { mx: _e ? _e.clientX - rect.left : 0, my: _e ? _e.clientY - rect.top : 0 }
+    return { mx: e.clientX - rect.left, my: e.clientY - rect.top }
   }
 
   function hitTest(mx: number, my: number) {
@@ -54,6 +55,7 @@ export function useCanvasInteraction(
 
   function onMouseDown(e: MouseEvent) {
     if (e.button !== 0) return
+    mouseDown = true
     const { mx, my } = localPos(e)
     downScreenX = mx
     downScreenY = my
@@ -75,7 +77,7 @@ export function useCanvasInteraction(
       graphStore.moveNode(draggingNodeId, w.x, w.y)
       return
     }
-    if (action === 'none' && Math.hypot(mx - downScreenX, my - downScreenY) > THRESHOLD) {
+    if (mouseDown && action === 'none' && Math.hypot(mx - downScreenX, my - downScreenY) > THRESHOLD) {
       if (hitNode) {
         action = 'drag'
         draggingNodeId = hitNode
@@ -97,14 +99,14 @@ export function useCanvasInteraction(
     }
   }
 
-  function onMouseUp() {
+  function onMouseUp(e: MouseEvent) {
     if (action === 'drag' && draggingNodeId) {
       const n = graphStore.graph.nodes.find((x) => x.id === draggingNodeId)
       if (n && uiState.mode === 'force' && !n.fixed) {
         graphStore.toggleFixed(draggingNodeId)
       }
     } else if (action === 'none') {
-      const { mx, my } = localPos()
+      const { mx, my } = localPos(e)
       const mode = uiState.mode
       if (mode === 'draw') {
         if (hitNode) {
@@ -135,11 +137,13 @@ export function useCanvasInteraction(
       }
     }
     action = 'none'
+    mouseDown = false
     draggingNodeId = null
     hover.draggingNodeId = null
   }
 
   function onMouseLeave() {
+    mouseDown = false
     hover.hoverNodeId = null
     hover.hoverEdgeId = null
   }

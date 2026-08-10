@@ -11,7 +11,7 @@ interface Arc {
   cost: number
   origCap: number
   orig: string | null
-  rev: number
+  rev: Arc
 }
 
 function log(message: string, pause = false): AlgoStep {
@@ -28,8 +28,9 @@ function buildNet(ctx: AlgoContext) {
   for (const n of g.nodes) adj.set(n.id, [])
   const arcs: Arc[] = []
   const add = (u: string, v: string, cap: number, cost: number, orig: string | null) => {
-    const a: Arc = { u, v, cap, cost, origCap: cap, orig, rev: arcs.length + 1 }
-    const b: Arc = { u: v, v: u, cap: 0, cost: -cost, origCap: 0, orig, rev: arcs.length }
+    const a: Arc = { u, v, cap, cost, origCap: cap, orig, rev: undefined as unknown as Arc }
+    const b: Arc = { u: v, v: u, cap: 0, cost: -cost, origCap: 0, orig, rev: a }
+    a.rev = b
     arcs.push(a, b)
     adj.get(u)!.push(a)
     adj.get(v)!.push(b)

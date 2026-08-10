@@ -11,10 +11,10 @@ export interface UserVisualAPI {
   done: (message?: string) => void
 }
 
-class AlgorithmRunner {
+export class AlgorithmRunner {
   status: AlgoStatus = 'idle'
   auto = false
-  speed = 500
+  speed = ref(500)
   logs = ref<string[]>([])
   matrix = ref<MatrixData | null>(null)
   doneMessage = ref('')
@@ -76,7 +76,7 @@ class AlgorithmRunner {
     this.applyStep(r.value)
     if (r.value.pause) {
       if (this.auto) {
-        this.timer = window.setTimeout(() => this.proceed(), this.speed)
+        this.timer = window.setTimeout(() => this.proceed(), this.speed.value)
       } else {
         this.status = 'paused'
       }
@@ -144,7 +144,7 @@ class AlgorithmRunner {
 
   private scheduleResume() {
     if (this.auto) {
-      this.timer = window.setTimeout(() => this.doResume(), this.speed)
+      this.timer = window.setTimeout(() => this.doResume(), this.speed.value)
     } else {
       this.status = 'paused'
     }
@@ -172,7 +172,7 @@ class AlgorithmRunner {
     if (this.status === 'paused') {
       this.doResume()
     } else if (this.status === 'running') {
-      this.timer = window.setTimeout(() => this.doResume(), this.speed)
+      this.timer = window.setTimeout(() => this.doResume(), this.speed.value)
     }
   }
 
