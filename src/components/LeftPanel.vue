@@ -51,7 +51,7 @@ const textRef = ref<HTMLTextAreaElement | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
 
 let timer: number | undefined
-let suppress = false
+let lastLoaded = ''
 
 const graph = computed(() => graphStore.graph)
 const directed = computed(() => graphStore.graph.directed)
@@ -59,11 +59,8 @@ const directed = computed(() => graphStore.graph.directed)
 watch(
   () => graphStore.graph,
   () => {
-    if (suppress) {
-      suppress = false
-      return
-    }
     const s = graphStore.serializeText()
+    if (s === lastLoaded) return
     if (s !== text.value) text.value = s
   },
   { deep: true },
@@ -71,15 +68,17 @@ watch(
 
 watch(custom, (v) => {
   graphStore.customLabels = v
-  graphStore.loadText(text.value)
+  loadFromText()
 })
+
+function loadFromText() {
+  graphStore.loadText(text.value)
+  lastLoaded = graphStore.serializeText()
+}
 
 function onInput() {
   clearTimeout(timer)
-  suppress = true
-  timer = window.setTimeout(() => {
-    graphStore.loadText(text.value)
-  }, 500)
+  timer = window.setTimeout(loadFromText, 500)
 }
 
 function setDirected(v: boolean) {
@@ -101,7 +100,7 @@ function onFile(e: Event) {
   const reader = new FileReader()
   reader.onload = () => {
     text.value = String(reader.result ?? '')
-    graphStore.loadText(text.value)
+    loadFromText()
     input.value = ''
   }
   reader.readAsText(file)
@@ -119,6 +118,7 @@ function exportFile() {
 
 onMounted(() => {
   text.value = graphStore.serializeText()
+  lastLoaded = text.value
 })
 </script>
 

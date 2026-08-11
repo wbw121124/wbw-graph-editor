@@ -254,4 +254,4 @@ export class GraphStore {
   }
 }
 
-export const graphStore = new GraphStore()
+export const graphStore = reactive(new GraphStore())
