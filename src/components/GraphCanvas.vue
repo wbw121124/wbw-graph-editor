@@ -229,14 +229,22 @@ defineExpose({
   user-select: none;
 }
 
-.tip-enter-active,
-.tip-leave-active {
-  transition: opacity 0.15s ease;
+.tip-enter-active {
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
 }
 
-.tip-enter-from,
+.tip-leave-active {
+  transition: opacity 0.12s ease-in, transform 0.12s ease-in;
+}
+
+.tip-enter-from {
+  opacity: 0;
+  transform: translate(6px, 6px) scale(0.96);
+}
+
 .tip-leave-to {
   opacity: 0;
+  transform: translate(-6px, -6px) scale(0.96);
 }
 
 .tip-line {

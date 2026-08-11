@@ -59,7 +59,10 @@ const directed = computed(() => graphStore.graph.directed)
 watch(
   () => graphStore.graph,
   () => {
-    if (suppress) return
+    if (suppress) {
+      suppress = false
+      return
+    }
     const s = graphStore.serializeText()
     if (s !== text.value) text.value = s
   },
@@ -73,10 +76,9 @@ watch(custom, (v) => {
 
 function onInput() {
   clearTimeout(timer)
+  suppress = true
   timer = window.setTimeout(() => {
-    suppress = true
     graphStore.loadText(text.value)
-    suppress = false
   }, 500)
 }
 
