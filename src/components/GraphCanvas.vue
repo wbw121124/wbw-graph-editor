@@ -9,6 +9,7 @@
       @mouseleave="onCanvasLeave"
       @wheel="handlers.onWheel"
     ></canvas>
+    <Transition name="tip">
     <div
       v-if="tipVisible"
       ref="tipEl"
@@ -20,6 +21,7 @@
     >
       <div v-for="line in tipLines" :key="line" class="tip-line">{{ line }}</div>
     </div>
+  </Transition>
   </div>
 </template>
 
@@ -271,6 +273,16 @@ defineExpose({
   box-shadow: 0 6px 20px var(--shadow);
   pointer-events: auto;
   user-select: none;
+}
+
+.tip-enter-active,
+.tip-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.tip-enter-from,
+.tip-leave-to {
+  opacity: 0;
 }
 
 .tip-line {
