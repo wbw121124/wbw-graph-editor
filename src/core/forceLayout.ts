@@ -29,7 +29,8 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
         d2 = 1
       }
       const d = Math.sqrt(d2)
-      const f = (k * k) / d
+      const repK = graphStyle.repulsionK
+      const f = repK / d2
       const ux = dx / d
       const uy = dy / d
       fx[i] += ux * f

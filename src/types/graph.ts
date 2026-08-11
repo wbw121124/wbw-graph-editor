@@ -1,4 +1,4 @@
-export const WORLD_SIZE = 1000
+export const WORLD_SIZE = 2000
 
 export interface GraphNode {
   id: string
@@ -28,6 +28,7 @@ export type EditorMode = 'force' | 'draw' | 'edit' | 'delete' | 'drag'
 export interface GraphStyle {
   nodeRadius: number
   edgeIdealLength: number
+  repulsionK: number
   nodeFill: string
   nodeStroke: string
   labelColor: string

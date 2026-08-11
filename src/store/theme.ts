@@ -80,6 +80,7 @@ export const ALGO_COLORS = {
 export const graphStyle = reactive<GraphStyle>({
   nodeRadius: 22,
   edgeIdealLength: 120,
+  repulsionK: 1728000,
   nodeFill: '',
   nodeStroke: '',
   labelColor: '',

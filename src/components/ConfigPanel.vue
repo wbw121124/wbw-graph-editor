@@ -12,6 +12,11 @@
       <span class="val">{{ style.edgeIdealLength }}</span>
     </div>
     <div class="cfg-row">
+      <span class="label">排斥强度</span>
+      <input v-model.number="style.repulsionK" type="range" min="0" max="6000000" step="100000" />
+      <span class="val">{{ style.repulsionK }}</span>
+    </div>
+    <div class="cfg-row">
       <span class="label">节点填充</span>
       <input v-model="style.nodeFill" type="color" />
       <button class="reset" @click="style.nodeFill = ''">默认</button>
