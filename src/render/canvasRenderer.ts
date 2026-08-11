@@ -207,7 +207,7 @@ function drawEdge(
   let labelX = (sx + ex) / 2
   let labelY = (sy + ey) / 2
 
-  const bend = bendOf(pinfo.index, pinfo.total)
+  const bend = bendOf(pinfo.index, pinfo.total) * (e.from <= e.to ? 1 : -1)
   if (bend !== 0) {
     const c = edgeControlPoint(a, b, bend)
     ctx.beginPath()

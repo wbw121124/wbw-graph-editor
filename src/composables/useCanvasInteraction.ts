@@ -58,7 +58,8 @@ export function useCanvasInteraction(
       if (!a || !b) continue
       if (a === b) continue
       const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
-      const c = edgeControlPoint(a, b, bendOf(index, total))
+      const bend = bendOf(index, total) * (e.from <= e.to ? 1 : -1)
+      const c = edgeControlPoint(a, b, bend)
       let d = Infinity
       let prev = { x: a.x, y: a.y }
       for (let s = 1; s <= 8; s++) {
