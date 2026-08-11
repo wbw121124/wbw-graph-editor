@@ -1,4 +1,4 @@
-import type { GraphData, GraphEdge, GraphNode, GraphStyle } from '../types/graph'
+import { WORLD_SIZE, type GraphData, type GraphEdge, type GraphNode, type GraphStyle } from '../types/graph'
 import { ALGO_COLORS, canvasTheme, graphStyle } from '../store/theme'
 import type { AlgoOverlayState } from './overlay'
 
@@ -335,6 +335,18 @@ export function drawScene(
     ctx.scale(view.scale, view.scale)
   }
 
+  const wx0 = -view.offsetX / view.scale
+  const wy0 = -view.offsetY / view.scale
+  const wx1 = wx0 + width / view.scale
+  const wy1 = wy0 + height / view.scale
+  ctx.fillStyle = 'rgba(255,0,0,0.25)'
+  const ovW = Math.max(0, Math.min(wx1, WORLD_SIZE) - Math.max(wx0, 0))
+  const ovH = Math.max(0, Math.min(wy1, WORLD_SIZE) - Math.max(wy0, 0))
+  ctx.fillRect(Math.max(wx0, 0), wy0, ovW, Math.max(0, -wy0))
+  ctx.fillRect(Math.max(wx0, 0), Math.max(wy0, WORLD_SIZE), ovW, Math.max(0, wy1 - WORLD_SIZE))
+  ctx.fillRect(wx0, Math.max(wy0, 0), Math.max(0, -wx0), ovH)
+  ctx.fillRect(Math.max(wx0, WORLD_SIZE), Math.max(wy0, 0), Math.max(0, wx1 - WORLD_SIZE), ovH)
+
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
   const parallel = buildParallelInfo(graph.edges, graph.directed)
   for (const e of graph.edges) {
@@ -363,6 +375,10 @@ export function drawScene(
       ctx.setLineDash([])
     }
   }
+
+  ctx.strokeStyle = 'rgba(255,0,0,0.5)'
+  ctx.lineWidth = 1.6
+  ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE)
 
   ctx.restore()
 }
