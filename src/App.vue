@@ -26,21 +26,21 @@
           <button :class="{ active: uiState.sideTab === 'custom' }" @click="uiState.sideTab = 'custom'">自定义</button>
           <button :class="{ active: uiState.sideTab === 'edit' }" @click="uiState.sideTab = 'edit'">编辑</button>
         </div>
-        <template v-if="uiState.sideTab === 'algo'">
+        <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'algo' }">
           <AlgoPanel />
           <AlgoControlBar />
           <AlgoLog />
-        </template>
-        <template v-else-if="uiState.sideTab === 'custom'">
+        </div>
+        <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'custom' }">
           <AlgorithmEditor />
           <AlgoControlBar />
           <AlgoLog />
-        </template>
-        <template v-else>
+        </div>
+        <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'edit' }">
           <ModeToolbar />
           <ConfigPanel />
           <CommandPanel :canvas="canvasRef" />
-        </template>
+        </div>
       </aside>
     </main>
 
@@ -153,5 +153,15 @@ const canvasRef = ref<InstanceType<typeof GraphCanvas> | null>(null)
 .tabs button.active {
   background: var(--accent);
   color: #fff;
+}
+
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tab-pane.hidden {
+  display: none;
 }
 </style>
