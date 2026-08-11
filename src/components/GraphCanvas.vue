@@ -11,6 +11,7 @@
     ></canvas>
     <div
       v-if="tipVisible"
+      ref="tipEl"
       class="tooltip"
       :style="{ left: tipX + 'px', top: tipY + 'px' }"
       @mouseenter="onTipEnter"
@@ -75,6 +76,7 @@ const tipVisible = ref(false)
 const tipX = ref(0)
 const tipY = ref(0)
 const tipLines = ref<string[]>([])
+const tipEl = ref<HTMLDivElement | null>(null)
 
 function resize() {
   const el = canvasRef.value
@@ -99,11 +101,32 @@ function render() {
   drawScene(ctx, graphStore.graph, view, algoOverlay, hover, width, height)
 }
 
-function applyTipPosition(mx: number, my: number) {
-  const sideX = mx < width / 2 ? 1 : -1
-  const sideY = my < height / 2 ? 1 : -1
-  tipX.value = Math.min(Math.max(mx + sideX * 16, 4), width - 208)
-  tipY.value = Math.min(Math.max(my + sideY * 16, 4), height - 150)
+function placeTip(mx: number, my: number) {
+  const el = tipEl.value
+  if (!el) return
+  const tipW = el.offsetWidth || 160
+  const tipH = el.offsetHeight || 120
+  const gap = 12
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const maxX = vw - tipW
+  const maxY = vh - tipH
+  const xs = mx < vw / 2 ? [mx + gap, mx - tipW - gap] : [mx - tipW - gap, mx + gap]
+  const ys = my < vh / 2 ? [my + gap, my - tipH - gap] : [my - tipH - gap, my + gap]
+  for (const x0 of xs) {
+    for (const y0 of ys) {
+      const x = Math.min(Math.max(x0, 0), maxX)
+      const y = Math.min(Math.max(y0, 0), maxY)
+      const covers = mx >= x && mx <= x + tipW && my >= y && my <= y + tipH
+      if (!covers) {
+        tipX.value = x
+        tipY.value = y
+        return
+      }
+    }
+  }
+  tipX.value = Math.min(Math.max(mx + gap, 0), maxX)
+  tipY.value = Math.min(Math.max(my + gap, 0), maxY)
 }
 
 function updateTip() {
@@ -145,15 +168,14 @@ function updateTip() {
     if (color) lines.push(`颜色: ${color}`)
     if (e.comment) lines.push(`注释: ${e.comment}`)
   }
-  applyTipPosition(lastMouseX, lastMouseY)
+  placeTip(lastMouseX, lastMouseY)
   tipLines.value = lines
   tipVisible.value = true
 }
 
 function onCanvasMove(e: MouseEvent) {
-  const rect = canvasRef.value!.getBoundingClientRect()
-  lastMouseX = e.clientX - rect.left
-  lastMouseY = e.clientY - rect.top
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
   handlers.onMouseMove(e)
   updateTip()
 }
@@ -172,16 +194,15 @@ function lockTip() {
 
 function onTipEnter(e: MouseEvent) {
   lockTip()
-  avoidCursor(e)
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
+  placeTip(e.clientX, e.clientY)
 }
 
 function onTipMove(e: MouseEvent) {
-  avoidCursor(e)
-}
-
-function avoidCursor(e: MouseEvent) {
-  const rect = canvasRef.value!.getBoundingClientRect()
-  applyTipPosition(e.clientX - rect.left, e.clientY - rect.top)
+  lastMouseX = e.clientX
+  lastMouseY = e.clientY
+  placeTip(e.clientX, e.clientY)
 }
 
 function unlockTip() {
@@ -239,8 +260,8 @@ defineExpose({
 }
 
 .tooltip {
-  position: absolute;
-  z-index: 20;
+  position: fixed;
+  z-index: 9999;
   min-width: 120px;
   max-width: 200px;
   padding: 8px 10px;
