@@ -2,6 +2,7 @@ import type { Ref } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { graphStyle } from '../store/theme'
 import { uiState } from '../store/ui'
+import { WORLD_SIZE } from '../types/graph'
 import {
   bendOf,
   buildParallelInfo,
@@ -148,7 +149,7 @@ export function useCanvasInteraction(
           }
         } else {
           const w = screenToWorld(view, mx, my)
-          graphStore.addNodeAt(w.x, w.y)
+          graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
         }
       } else if (mode === 'edit') {
         if (hitNode) emit('edit-node', hitNode)

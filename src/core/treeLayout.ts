@@ -1,4 +1,5 @@
 import { graphStore } from '../store/graphStore'
+import { WORLD_SIZE } from '../types/graph'
 
 export function arrangeAsTree(layerGap = 90, nodeGap = 60) {
   const g = graphStore.graph
@@ -49,8 +50,8 @@ export function arrangeAsTree(layerGap = 90, nodeGap = 60) {
   }
 
   for (const n of g.nodes) {
-    n.x = xOf.get(n.id) ?? 0
-    n.y = (depthOf.get(n.id) ?? 0) * layerGap
+    n.x = Math.min(WORLD_SIZE, Math.max(0, xOf.get(n.id) ?? 0))
+    n.y = Math.min(WORLD_SIZE, Math.max(0, (depthOf.get(n.id) ?? 0) * layerGap))
     n.fixed = true
   }
 }

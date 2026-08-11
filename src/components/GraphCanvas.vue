@@ -22,6 +22,7 @@ import {
 } from '../render/canvasRenderer'
 import { useCanvasInteraction } from '../composables/useCanvasInteraction'
 import { layoutTick } from '../core/forceLayout'
+import { WORLD_SIZE } from '../types/graph'
 
 const emit = defineEmits<{
   'edit-node': [id: string]
@@ -42,7 +43,7 @@ const hover = reactive<UiHoverState>({
 const handlers = useCanvasInteraction(canvasRef, view, hover, (ev, id) => {
   if (ev === 'edit-node') emit('edit-node', id)
   else emit('edit-edge', id)
-}, () => ({ width: width / view.scale, height: height / view.scale }))
+}, () => ({ width: WORLD_SIZE, height: WORLD_SIZE }))
 
 let ctx: CanvasRenderingContext2D | null = null
 let raf = 0
@@ -75,11 +76,7 @@ function render() {
 }
 
 function loop(t = 0) {
-  layoutTick(
-    1,
-    { width: width / view.scale, height: height / view.scale },
-    hover.draggingNodeId,
-  )
+  layoutTick(1, { width: WORLD_SIZE, height: WORLD_SIZE }, hover.draggingNodeId)
   render()
   raf = requestAnimationFrame(loop)
 }

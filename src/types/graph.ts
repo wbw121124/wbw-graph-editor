@@ -1,3 +1,5 @@
+export const WORLD_SIZE = 1000
+
 export interface GraphNode {
   id: string
   label: string
