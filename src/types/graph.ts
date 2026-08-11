@@ -21,7 +21,7 @@ export interface GraphData {
   edges: GraphEdge[]
 }
 
-export type EditorMode = 'force' | 'draw' | 'edit' | 'delete'
+export type EditorMode = 'force' | 'draw' | 'edit' | 'delete' | 'drag'
 
 export interface GraphStyle {
   nodeRadius: number
