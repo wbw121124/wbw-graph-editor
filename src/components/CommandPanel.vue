@@ -17,6 +17,9 @@ import { graphStore } from '../store/graphStore'
 import { arrangeAsTree } from '../core/treeLayout'
 import { generateTikZ } from '../core/markup'
 import { uiState } from '../store/ui'
+import { drawScene, type UiHoverState } from '../render/canvasRenderer'
+import { algoOverlay } from '../render/overlay'
+import { WORLD_SIZE } from '../types/graph'
 import type GraphCanvas from './GraphCanvas.vue'
 
 const props = defineProps<{ canvas: InstanceType<typeof GraphCanvas> | null }>()
@@ -36,11 +39,34 @@ function fit() {
 }
 
 function downloadPng() {
-  const el = document.querySelector<HTMLCanvasElement>('.graph-canvas')
-  if (!el) return
+  const exportScale = 2
+  const size = WORLD_SIZE * exportScale
+  const cv = document.createElement('canvas')
+  cv.width = size
+  cv.height = size
+  const ctx = cv.getContext('2d')
+  if (!ctx) return
+  ctx.setTransform(exportScale, 0, 0, exportScale, 0, 0)
+  const emptyHover: UiHoverState = {
+    hoverNodeId: null,
+    hoverEdgeId: null,
+    selectedNodeId: null,
+    tempEdgeFromId: null,
+    tempEdgeTarget: null,
+    draggingNodeId: null,
+  }
+  drawScene(
+    ctx,
+    graphStore.graph,
+    { scale: 1, offsetX: 0, offsetY: 0 },
+    algoOverlay,
+    emptyHover,
+    WORLD_SIZE,
+    WORLD_SIZE,
+  )
   const a = document.createElement('a')
   a.download = 'graph.png'
-  a.href = el.toDataURL('image/png')
+  a.href = cv.toDataURL('image/png')
   a.click()
 }
 
