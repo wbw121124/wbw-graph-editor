@@ -523,8 +523,9 @@ export function* boundedFlow(ctx: AlgoContext): Generator<AlgoStep> {
   adj.set(SS, [])
   adj.set(ST, [])
   const add = (u: string, v: string, cap: number, cost: number, orig: string | null) => {
-    const a: Arc = { u, v, cap, cost, origCap: cap, orig, rev: arcs.length + 1 }
-    const b: Arc = { u: v, v: u, cap: 0, cost: -cost, origCap: 0, orig, rev: arcs.length }
+    const a: Arc = { u, v, cap, cost, origCap: cap, orig, rev: undefined as unknown as Arc }
+    const b: Arc = { u: v, v: u, cap: 0, cost: -cost, origCap: 0, orig, rev: a }
+    a.rev = b
     arcs.push(a, b)
     adj.get(u)!.push(a)
     adj.get(v)!.push(b)
