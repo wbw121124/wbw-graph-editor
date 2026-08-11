@@ -10,7 +10,7 @@ export function clampLayout(v: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, v))
 }
 
-export function layoutTick(dt = 1, bounds?: LayoutBounds) {
+export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null = null) {
   const { nodes, edges } = graphStore.graph
   const n = nodes.length
   if (n === 0) return
@@ -64,7 +64,7 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds) {
   const speed = 0.06 * dt
   for (let i = 0; i < n; i++) {
     const node = nodes[i]
-    if (node.fixed) continue
+    if (node.fixed || node.id === skipId) continue
     const mag = Math.hypot(fx[i], fy[i])
     if (mag === 0) continue
     const step = Math.min(mag, 50) * speed

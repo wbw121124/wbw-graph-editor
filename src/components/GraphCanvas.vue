@@ -22,7 +22,6 @@ import {
 } from '../render/canvasRenderer'
 import { useCanvasInteraction } from '../composables/useCanvasInteraction'
 import { layoutTick } from '../core/forceLayout'
-import { uiState } from '../store/ui'
 
 const emit = defineEmits<{
   'edit-node': [id: string]
@@ -76,9 +75,11 @@ function render() {
 }
 
 function loop(t = 0) {
-  if (uiState.mode === 'force') {
-    layoutTick(1, { width: width / view.scale, height: height / view.scale })
-  }
+  layoutTick(
+    1,
+    { width: width / view.scale, height: height / view.scale },
+    hover.draggingNodeId,
+  )
   render()
   raf = requestAnimationFrame(loop)
 }
