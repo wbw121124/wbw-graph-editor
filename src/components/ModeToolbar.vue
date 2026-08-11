@@ -26,6 +26,7 @@ const modes: { id: EditorMode; name: string }[] = [
   { id: 'edit', name: 'Edit' },
   { id: 'delete', name: 'Delete' },
   { id: 'drag', name: 'Drag' },
+  { id: 'select', name: 'Select' },
 ]
 
 const hints: Record<EditorMode, string> = {
@@ -34,6 +35,7 @@ const hints: Record<EditorMode, string> = {
   edit: '单击节点修改标签，单击边修改权重 / 容量 / 费用。',
   delete: '单击节点删除节点及其所有边，单击边删除边。',
   drag: '拖拽节点移动位置（不会自动固定），拖拽空白处平移画布。',
+  select: '单击节点/边选中（再点取消），点空白取消，Delete 删除选中，拖拽移动节点。',
 }
 
 const hint = computed(() => hints[uiState.mode])

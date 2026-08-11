@@ -161,13 +161,19 @@ function nodeMarkup(n: GraphNode, overlay: AlgoOverlayState): string {
   return parts.join('')
 }
 
-export function buildSvg(graph: GraphData, overlay: AlgoOverlayState): string {
+export interface SvgExportOptions {
+  transparentBg?: boolean
+}
+
+export function buildSvg(graph: GraphData, overlay: AlgoOverlayState, opts: SvgExportOptions = {}): string {
   const theme = canvasTheme.value
   const parts: string[] = []
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WORLD_SIZE} ${WORLD_SIZE}" width="${WORLD_SIZE}" height="${WORLD_SIZE}">`,
   )
-  parts.push(`<rect x="0" y="0" width="${WORLD_SIZE}" height="${WORLD_SIZE}" fill="${esc(theme.bg)}"/>`)
+  if (!opts.transparentBg) {
+    parts.push(`<rect x="0" y="0" width="${WORLD_SIZE}" height="${WORLD_SIZE}" fill="${esc(theme.bg)}"/>`)
+  }
 
   if (graphStyle.showGrid) {
     const gridParts: string[] = []

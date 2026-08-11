@@ -38,6 +38,7 @@
       <button class="reset" @click="style.edgeColor = ''">默认</button>
     </div>
     <label class="check"><input v-model="style.showGrid" type="checkbox" /> 显示网格</label>
+    <label class="check"><input v-model="style.exportTransparentBg" type="checkbox" /> 导出背景透明</label>
   </div>
 </template>
 

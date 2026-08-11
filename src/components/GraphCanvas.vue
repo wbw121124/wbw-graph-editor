@@ -37,7 +37,8 @@ import {
 } from '../render/canvasRenderer'
 import { useCanvasInteraction } from '../composables/useCanvasInteraction'
 import { layoutTick } from '../core/forceLayout'
-import { WORLD_SIZE } from '../types/graph'
+import { WORLD_SIZE, type EditorMode } from '../types/graph'
+import { uiState } from '../store/ui'
 
 const emit = defineEmits<{
   'edit-node': [id: string]
@@ -50,6 +51,7 @@ const hover = reactive<UiHoverState>({
   hoverNodeId: null,
   hoverEdgeId: null,
   selectedNodeId: null,
+  selectedEdgeId: null,
   tempEdgeFromId: null,
   tempEdgeTarget: null,
   draggingNodeId: null,
@@ -177,12 +179,50 @@ function loop(t = 0) {
   raf = requestAnimationFrame(loop)
 }
 
+const MODE_KEYS: Record<string, EditorMode> = {
+  v: 'select',
+  d: 'draw',
+  e: 'edit',
+  x: 'delete',
+  g: 'drag',
+  f: 'force',
+}
+
+function onKeydown(e: KeyboardEvent) {
+  const t = e.target as HTMLElement | null
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+  if (e.key === 'Escape') {
+    hover.selectedNodeId = null
+    hover.selectedEdgeId = null
+    hover.tempEdgeFromId = null
+    hover.tempEdgeTarget = null
+    return
+  }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && uiState.mode === 'select') {
+    e.preventDefault()
+    if (hover.selectedNodeId) {
+      graphStore.removeNode(hover.selectedNodeId)
+      hover.selectedNodeId = null
+    } else if (hover.selectedEdgeId) {
+      graphStore.removeEdge(hover.selectedEdgeId)
+      hover.selectedEdgeId = null
+    }
+    return
+  }
+  const mode = MODE_KEYS[e.key.toLowerCase()]
+  if (mode) {
+    e.preventDefault()
+    uiState.mode = mode
+  }
+}
+
 onMounted(() => {
   resize()
   resizeObserver = new ResizeObserver(() => resize())
   if (canvasRef.value?.parentElement) {
     resizeObserver.observe(canvasRef.value.parentElement)
   }
+  window.addEventListener('keydown', onKeydown)
   loop()
 })
 
@@ -190,6 +230,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(raf)
   resizeObserver?.disconnect()
   clearTimeout(tipTimer)
+  window.removeEventListener('keydown', onKeydown)
 })
 
 defineExpose({

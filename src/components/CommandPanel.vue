@@ -15,6 +15,7 @@
 
 <script setup lang="ts">
 import { graphStore } from '../store/graphStore'
+import { graphStyle } from '../store/theme'
 import { arrangeAsTree } from '../core/treeLayout'
 import { generateTikZ } from '../core/markup'
 import { uiState } from '../store/ui'
@@ -53,6 +54,7 @@ function downloadPng() {
     hoverNodeId: null,
     hoverEdgeId: null,
     selectedNodeId: null,
+    selectedEdgeId: null,
     tempEdgeFromId: null,
     tempEdgeTarget: null,
     draggingNodeId: null,
@@ -66,6 +68,7 @@ function downloadPng() {
     WORLD_SIZE,
     WORLD_SIZE,
     false,
+    graphStyle.exportTransparentBg,
   )
   const a = document.createElement('a')
   a.download = 'graph.png'
@@ -74,7 +77,7 @@ function downloadPng() {
 }
 
 function downloadSvg() {
-  const svg = buildSvg(graphStore.graph, algoOverlay)
+  const svg = buildSvg(graphStore.graph, algoOverlay, { transparentBg: graphStyle.exportTransparentBg })
   const blob = new Blob([svg], { type: 'image/svg+xml' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

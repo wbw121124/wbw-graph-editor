@@ -25,7 +25,7 @@ export interface GraphData {
   edges: GraphEdge[]
 }
 
-export type EditorMode = 'force' | 'draw' | 'edit' | 'delete' | 'drag'
+export type EditorMode = 'force' | 'draw' | 'edit' | 'delete' | 'drag' | 'select'
 
 export interface GraphStyle {
   nodeRadius: number
@@ -36,4 +36,5 @@ export interface GraphStyle {
   labelColor: string
   edgeColor: string
   showGrid: boolean
+  exportTransparentBg: boolean
 }

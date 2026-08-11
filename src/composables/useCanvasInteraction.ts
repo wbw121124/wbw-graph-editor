@@ -161,6 +161,17 @@ export function useCanvasInteraction(
         else if (hitEdge) graphStore.removeEdge(hitEdge)
       } else if (mode === 'force') {
         if (hitNode) graphStore.toggleFixed(hitNode)
+      } else if (mode === 'select') {
+        if (hitNode) {
+          hover.selectedNodeId = hover.selectedNodeId === hitNode ? null : hitNode
+          hover.selectedEdgeId = null
+        } else if (hitEdge) {
+          hover.selectedEdgeId = hover.selectedEdgeId === hitEdge ? null : hitEdge
+          hover.selectedNodeId = null
+        } else {
+          hover.selectedNodeId = null
+          hover.selectedEdgeId = null
+        }
       }
     }
     action = 'none'

@@ -12,6 +12,7 @@ export interface UiHoverState {
   hoverNodeId: string | null
   hoverEdgeId: string | null
   selectedNodeId: string | null
+  selectedEdgeId: string | null
   tempEdgeFromId: string | null
   tempEdgeTarget: { x: number; y: number } | null
   draggingNodeId: string | null
@@ -166,11 +167,12 @@ function drawEdge(
 ) {
   const theme = canvasTheme.value
   const r = nodeRadius()
-  const color = edgeColorOf(overlay, e.id) ?? (hover.hoverEdgeId === e.id ? theme.hover : graphStyle.edgeColor || theme.edgeColor)
   const isAlgo = overlay.edgeColors.has(e.id)
   const isHover = hover.hoverEdgeId === e.id
+  const isSelected = hover.selectedEdgeId === e.id
+  const color = edgeColorOf(overlay, e.id) ?? (isHover ? theme.hover : isSelected ? theme.selected : graphStyle.edgeColor || theme.edgeColor)
   ctx.strokeStyle = color
-  ctx.lineWidth = isAlgo ? 2.6 : isHover ? 2.4 : 1.6
+  ctx.lineWidth = isAlgo ? 2.6 : isSelected ? 2.6 : isHover ? 2.4 : 1.6
   ctx.fillStyle = color
 
   if (e.from === e.to) {
@@ -329,11 +331,14 @@ export function drawScene(
   width: number,
   height: number,
   showWorldBounds = true,
+  transparentBg = false,
 ) {
   const theme = canvasTheme.value
   ctx.clearRect(0, 0, width, height)
-  ctx.fillStyle = theme.bg
-  ctx.fillRect(0, 0, width, height)
+  if (!transparentBg) {
+    ctx.fillStyle = theme.bg
+    ctx.fillRect(0, 0, width, height)
+  }
 
   ctx.save()
   ctx.translate(view.offsetX, view.offsetY)
