@@ -2,7 +2,16 @@ import type { Ref } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { graphStyle } from '../store/theme'
 import { uiState } from '../store/ui'
-import { clamp, screenToWorld, type UiHoverState, type ViewTransform } from '../render/canvasRenderer'
+import {
+  bendOf,
+  buildParallelInfo,
+  clamp,
+  edgeControlPoint,
+  quadPoint,
+  screenToWorld,
+  type UiHoverState,
+  type ViewTransform,
+} from '../render/canvasRenderer'
 
 export type CanvasInteractionEvent = 'edit-node' | 'edit-edge'
 
@@ -41,11 +50,20 @@ export function useCanvasInteraction(
     }
     let bestEdge: string | null = null
     let bestDist = Infinity
+    const parallel = buildParallelInfo(graphStore.graph.edges, graphStore.graph.directed)
     for (const e of graphStore.graph.edges) {
       const a = graphStore.graph.nodes.find((n) => n.id === e.from)
       const b = graphStore.graph.nodes.find((n) => n.id === e.to)
       if (!a || !b) continue
-      const d = distToSegment(p.x, p.y, a.x, a.y, b.x, b.y)
+      const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
+      const c = edgeControlPoint(a, b, bendOf(index, total))
+      let d = Infinity
+      let prev = { x: a.x, y: a.y }
+      for (let s = 1; s <= 8; s++) {
+        const cur = quadPoint(a, c, b, s / 8)
+        d = Math.min(d, distToSegment(p.x, p.y, prev.x, prev.y, cur.x, cur.y))
+        prev = cur
+      }
       if (d < bestDist && d < 10 / view.scale + 2) {
         bestDist = d
         bestEdge = e.id

@@ -88,6 +88,54 @@ function drawGrid(ctx: CanvasRenderingContext2D, view: ViewTransform, width: num
   ctx.stroke()
 }
 
+function parallelKey(e: GraphEdge, directed: boolean) {
+  return directed ? `${e.from}->${e.to}` : [e.from, e.to].sort().join('<>')
+}
+
+export function buildParallelInfo(edges: GraphEdge[], directed: boolean): Map<string, { index: number; total: number }> {
+  const counts = new Map<string, number>()
+  for (const e of edges) {
+    const k = parallelKey(e, directed)
+    counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  const order = new Map<string, number>()
+  const info = new Map<string, { index: number; total: number }>()
+  for (const e of edges) {
+    const k = parallelKey(e, directed)
+    const total = counts.get(k) ?? 1
+    const index = order.get(k) ?? 0
+    order.set(k, index + 1)
+    info.set(e.id, { index, total })
+  }
+  return info
+}
+
+const PARALLEL_GAP = 14
+
+export function bendOf(index: number, total: number) {
+  if (total <= 1) return 0
+  return (index - (total - 1) / 2) * PARALLEL_GAP
+}
+
+export function edgeControlPoint(a: { x: number; y: number }, b: { x: number; y: number }, bend: number) {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+  const mx = (a.x + b.x) / 2
+  const my = (a.y + b.y) / 2
+  return { x: mx - uy * bend, y: my + ux * bend }
+}
+
+export function quadPoint(a: { x: number; y: number }, c: { x: number; y: number }, b: { x: number; y: number }, t: number) {
+  const s = 1 - t
+  return {
+    x: s * s * a.x + 2 * s * t * c.x + t * t * b.x,
+    y: s * s * a.y + 2 * s * t * c.y + t * t * b.y,
+  }
+}
+
 function arrowHead(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, size: number) {
   const angle = Math.atan2(to.y - from.y, to.x - from.x)
   const a1 = angle + Math.PI / 7
@@ -108,6 +156,7 @@ function drawEdge(
   directed: boolean,
   overlay: AlgoOverlayState,
   hover: UiHoverState,
+  bend: number,
 ) {
   const theme = canvasTheme.value
   const r = nodeRadius()
@@ -145,20 +194,38 @@ function drawEdge(
   const ex = b.x - ux * r
   const ey = b.y - uy * r
 
-  ctx.beginPath()
-  ctx.moveTo(sx, sy)
-  ctx.lineTo(ex, ey)
-  ctx.stroke()
+  let labelX = (sx + ex) / 2
+  let labelY = (sy + ey) / 2
 
-  if (directed) {
-    arrowHead(ctx, { x: ex - ux * r, y: ey - uy * r }, { x: ex, y: ey }, 9)
+  if (bend !== 0) {
+    const c = edgeControlPoint(a, b, bend)
+    ctx.beginPath()
+    ctx.moveTo(sx, sy)
+    ctx.quadraticCurveTo(c.x, c.y, ex, ey)
+    ctx.stroke()
+    if (directed) {
+      const tdx = ex - c.x
+      const tdy = ey - c.y
+      const tl = Math.hypot(tdx, tdy) || 1
+      arrowHead(ctx, { x: ex - (tdx / tl) * r, y: ey - (tdy / tl) * r }, { x: ex, y: ey }, 9)
+    }
+    const mid = quadPoint({ x: sx, y: sy }, c, { x: ex, y: ey }, 0.5)
+    labelX = mid.x
+    labelY = mid.y
+  } else {
+    ctx.beginPath()
+    ctx.moveTo(sx, sy)
+    ctx.lineTo(ex, ey)
+    ctx.stroke()
+
+    if (directed) {
+      arrowHead(ctx, { x: ex - ux * r, y: ey - uy * r }, { x: ex, y: ey }, 9)
+    }
   }
 
   const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
   if (text) {
-    const mx = (sx + ex) / 2
-    const my = (sy + ey) / 2
-    drawEdgeLabel(ctx, mx, my, text, theme)
+    drawEdgeLabel(ctx, labelX, labelY, text, theme)
   }
 }
 
@@ -269,11 +336,13 @@ export function drawScene(
   }
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
+  const parallel = buildParallelInfo(graph.edges, graph.directed)
   for (const e of graph.edges) {
     const a = byId.get(e.from)
     const b = byId.get(e.to)
     if (!a || !b) continue
-    drawEdge(ctx, e, a, b, graph.directed, overlay, hover)
+    const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
+    drawEdge(ctx, e, a, b, graph.directed, overlay, hover, bendOf(index, total))
   }
 
   for (const n of graph.nodes) {
