@@ -17,7 +17,6 @@
     <div class="section grow">
       <div class="row between">
         <span class="label">Graph Data</span>
-        <label class="check"><input v-model="custom" type="checkbox" /> 自定义标签</label>
       </div>
       <textarea
         ref="textRef"
@@ -46,7 +45,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
 
 const text = ref('')
-const custom = ref(graphStore.customLabels)
 const textRef = ref<HTMLTextAreaElement | null>(null)
 const fileRef = ref<HTMLInputElement | null>(null)
 
@@ -65,11 +63,6 @@ watch(
   },
   { deep: true },
 )
-
-watch(custom, (v) => {
-  graphStore.customLabels = v
-  loadFromText()
-})
 
 function loadFromText() {
   graphStore.loadText(text.value)

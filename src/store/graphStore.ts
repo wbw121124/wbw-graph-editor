@@ -11,7 +11,6 @@ function snapshotOf(g: GraphData): string {
 
 export class GraphStore {
   graph = reactive<GraphData>({ directed: false, nodes: [], edges: [] })
-  customLabels = false
 
   private history: string[] = []
   private future: string[] = []
@@ -181,7 +180,7 @@ export class GraphStore {
   }
 
   loadText(text: string) {
-    const parsed = parseGraphText(text, this.customLabels)
+    const parsed = parseGraphText(text)
     this.commit()
     const byLabel = new Map(this.graph.nodes.map((n) => [n.label, n]))
     const idOf = new Map<string, string>()
@@ -211,6 +210,7 @@ export class GraphStore {
       weight: pe.weight,
       capacity: pe.capacity,
       cost: pe.cost,
+      comment: pe.comment ?? undefined,
     }))
     this.graph.edges.splice(0, this.graph.edges.length, ...newEdges)
   }
@@ -220,9 +220,17 @@ export class GraphStore {
     for (const n of this.graph.nodes) lines.push(n.label)
     for (const e of this.graph.edges) {
       let line = `${this.nodeLabel(e.from)} ${this.nodeLabel(e.to)}`
-      if (e.weight !== null) line += ` ${e.weight}`
-      if (e.capacity !== null) line += ` ${e.capacity}`
-      if (e.cost !== null) line += ` ${e.cost}`
+      const hasWeight = e.weight !== null
+      const hasCapacity = e.capacity !== null
+      const hasCost = e.cost !== null
+      const hasComment = !!e.comment
+      if (hasWeight) line += ` ${e.weight}`
+      else if (hasCapacity || hasCost || hasComment) line += ' _'
+      if (hasCapacity) line += ` ${e.capacity}`
+      else if (hasCost || hasComment) line += ' _'
+      if (hasCost) line += ` ${e.cost}`
+      else if (hasComment) line += ' _'
+      if (hasComment) line += ` ${e.comment}`
       lines.push(line)
     }
     return lines.join('\n')
