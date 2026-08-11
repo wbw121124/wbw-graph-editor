@@ -14,7 +14,7 @@
     <div class="cfg-row">
       <span class="label">排斥强度</span>
       <input v-model.number="style.repulsionK" type="range" min="0" max="6000000" step="100000" />
-      <span class="val">{{ style.repulsionK.toExponential(1) }}</span>
+      <span class="val">{{ style.repulsionK.toExponential(1).replace('e+', 'e') }}</span>
     </div>
     <div class="cfg-row">
       <span class="label">节点填充</span>
