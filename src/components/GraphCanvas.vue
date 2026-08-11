@@ -43,7 +43,7 @@ const hover = reactive<UiHoverState>({
 const handlers = useCanvasInteraction(canvasRef, view, hover, (ev, id) => {
   if (ev === 'edit-node') emit('edit-node', id)
   else emit('edit-edge', id)
-})
+}, () => ({ width: width / view.scale, height: height / view.scale }))
 
 let ctx: CanvasRenderingContext2D | null = null
 let raf = 0
@@ -77,7 +77,7 @@ function render() {
 
 function loop(t = 0) {
   if (uiState.mode === 'force') {
-    layoutTick(1)
+    layoutTick(1, { width: width / view.scale, height: height / view.scale })
   }
   render()
   raf = requestAnimationFrame(loop)

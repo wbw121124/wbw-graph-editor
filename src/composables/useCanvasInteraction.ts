@@ -11,6 +11,7 @@ export function useCanvasInteraction(
   view: ViewTransform,
   hover: UiHoverState,
   emit: (event: CanvasInteractionEvent, id: string) => void,
+  getBounds?: () => { width: number; height: number },
 ) {
   let action: 'none' | 'pan' | 'drag' = 'none'
   let mouseDown = false
@@ -74,6 +75,11 @@ export function useCanvasInteraction(
     }
     if (action === 'drag' && draggingNodeId) {
       const w = screenToWorld(view, mx, my)
+      const b = getBounds?.()
+      if (b) {
+        w.x = clamp(w.x, 0, b.width)
+        w.y = clamp(w.y, 0, b.height)
+      }
       graphStore.moveNode(draggingNodeId, w.x, w.y)
       return
     }

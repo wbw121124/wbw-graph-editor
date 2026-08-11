@@ -1,7 +1,16 @@
 import { graphStore } from '../store/graphStore'
 import { graphStyle } from '../store/theme'
 
-export function layoutTick(dt = 1) {
+export interface LayoutBounds {
+  width: number
+  height: number
+}
+
+export function clampLayout(v: number, lo: number, hi: number) {
+  return Math.min(hi, Math.max(lo, v))
+}
+
+export function layoutTick(dt = 1, bounds?: LayoutBounds) {
   const { nodes, edges } = graphStore.graph
   const n = nodes.length
   if (n === 0) return
@@ -38,7 +47,7 @@ export function layoutTick(dt = 1) {
     const dx = nodes[j].x - nodes[i].x
     const dy = nodes[j].y - nodes[i].y
     const d = Math.sqrt(dx * dx + dy * dy) || 1
-    const f = (d - k) * 0.08
+    const f = (d * d) / k
     const ux = dx / d
     const uy = dy / d
     fx[i] += ux * f
@@ -61,5 +70,9 @@ export function layoutTick(dt = 1) {
     const step = Math.min(mag, 50) * speed
     node.x += (fx[i] / mag) * step
     node.y += (fy[i] / mag) * step
+    if (bounds) {
+      node.x = clampLayout(node.x, 0, bounds.width)
+      node.y = clampLayout(node.y, 0, bounds.height)
+    }
   }
 }
