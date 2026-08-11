@@ -13,7 +13,8 @@
       v-if="tipVisible"
       class="tooltip"
       :style="{ left: tipX + 'px', top: tipY + 'px' }"
-      @mouseenter="lockTip"
+      @mouseenter="onTipEnter"
+      @mousemove="onTipMove"
       @mouseleave="unlockTip"
     >
       <div v-for="line in tipLines" :key="line" class="tip-line">{{ line }}</div>
@@ -98,6 +99,13 @@ function render() {
   drawScene(ctx, graphStore.graph, view, algoOverlay, hover, width, height)
 }
 
+function applyTipPosition(mx: number, my: number) {
+  const sideX = mx < width / 2 ? 1 : -1
+  const sideY = my < height / 2 ? 1 : -1
+  tipX.value = Math.min(Math.max(mx + sideX * 16, 4), width - 208)
+  tipY.value = Math.min(Math.max(my + sideY * 16, 4), height - 150)
+}
+
 function updateTip() {
   if (tipLock) return
   const g = graphStore.graph
@@ -137,10 +145,7 @@ function updateTip() {
     if (color) lines.push(`颜色: ${color}`)
     if (e.comment) lines.push(`注释: ${e.comment}`)
   }
-  const sideX = lastMouseX < width / 2 ? 1 : -1
-  const sideY = lastMouseY < height / 2 ? 1 : -1
-  tipX.value = Math.min(Math.max(lastMouseX + sideX * 16, 4), width - 208)
-  tipY.value = Math.min(Math.max(lastMouseY + sideY * 16, 4), height - 150)
+  applyTipPosition(lastMouseX, lastMouseY)
   tipLines.value = lines
   tipVisible.value = true
 }
@@ -163,6 +168,20 @@ function onCanvasLeave() {
 function lockTip() {
   tipLock = true
   clearTimeout(tipTimer)
+}
+
+function onTipEnter(e: MouseEvent) {
+  lockTip()
+  avoidCursor(e)
+}
+
+function onTipMove(e: MouseEvent) {
+  avoidCursor(e)
+}
+
+function avoidCursor(e: MouseEvent) {
+  const rect = canvasRef.value!.getBoundingClientRect()
+  applyTipPosition(e.clientX - rect.left, e.clientY - rect.top)
 }
 
 function unlockTip() {
