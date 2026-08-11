@@ -51,11 +51,12 @@ export function useCanvasInteraction(
     }
     let bestEdge: string | null = null
     let bestDist = Infinity
-    const parallel = buildParallelInfo(graphStore.graph.edges, graphStore.graph.directed)
+    const parallel = buildParallelInfo(graphStore.graph.edges)
     for (const e of graphStore.graph.edges) {
       const a = graphStore.graph.nodes.find((n) => n.id === e.from)
       const b = graphStore.graph.nodes.find((n) => n.id === e.to)
       if (!a || !b) continue
+      if (a === b) continue
       const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
       const c = edgeControlPoint(a, b, bendOf(index, total))
       let d = Infinity

@@ -88,24 +88,26 @@ function drawGrid(ctx: CanvasRenderingContext2D, view: ViewTransform, width: num
   ctx.stroke()
 }
 
-function parallelKey(e: GraphEdge, directed: boolean) {
-  return directed ? `${e.from}->${e.to}` : [e.from, e.to].sort().join('<>')
+function pairKey(a: string, b: string) {
+  return a < b ? `${a}<>${b}` : `${b}<>${a}`
 }
 
-export function buildParallelInfo(edges: GraphEdge[], directed: boolean): Map<string, { index: number; total: number }> {
-  const counts = new Map<string, number>()
+export function buildParallelInfo(edges: GraphEdge[]): Map<string, { index: number; total: number }> {
+  const groups = new Map<string, { dir0: string[]; dir1: string[] }>()
   for (const e of edges) {
-    const k = parallelKey(e, directed)
-    counts.set(k, (counts.get(k) ?? 0) + 1)
+    const k = pairKey(e.from, e.to)
+    let g = groups.get(k)
+    if (!g) {
+      g = { dir0: [], dir1: [] }
+      groups.set(k, g)
+    }
+    ;(e.from <= e.to ? g.dir0 : g.dir1).push(e.id)
   }
-  const order = new Map<string, number>()
   const info = new Map<string, { index: number; total: number }>()
-  for (const e of edges) {
-    const k = parallelKey(e, directed)
-    const total = counts.get(k) ?? 1
-    const index = order.get(k) ?? 0
-    order.set(k, index + 1)
-    info.set(e.id, { index, total })
+  for (const g of groups.values()) {
+    const ids = [...g.dir0, ...g.dir1]
+    const total = ids.length
+    ids.forEach((id, index) => info.set(id, { index, total }))
   }
   return info
 }
@@ -156,7 +158,7 @@ function drawEdge(
   directed: boolean,
   overlay: AlgoOverlayState,
   hover: UiHoverState,
-  bend: number,
+  pinfo: { index: number; total: number },
 ) {
   const theme = canvasTheme.value
   const r = nodeRadius()
@@ -168,14 +170,18 @@ function drawEdge(
   ctx.fillStyle = color
 
   if (e.from === e.to) {
-    const cx = a.x + r * 1.5
-    const cy = a.y + r * 1.5
+    const { index, total } = pinfo
+    const ang = total > 1 ? (-Math.PI / 4 + (index / total) * Math.PI * 2) : Math.PI / 4
+    const cx = a.x + Math.cos(ang) * r * 1.7
+    const cy = a.y + Math.sin(ang) * r * 1.7
     const rr = r * 0.55
     ctx.beginPath()
     ctx.arc(cx, cy, rr, 0, Math.PI * 2)
     ctx.stroke()
     if (directed) {
-      arrowHead(ctx, { x: cx + rr, y: cy - rr * 0.7 }, { x: cx + rr * 1.05, y: cy }, 8)
+      const ax = Math.cos(ang + Math.PI / 2)
+      const ay = Math.sin(ang + Math.PI / 2)
+      arrowHead(ctx, { x: cx + ax * rr, y: cy + ay * rr }, { x: cx + ax * rr * 1.15, y: cy + ay * rr * 1.15 }, 8)
     }
     const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
     if (text) {
@@ -197,6 +203,7 @@ function drawEdge(
   let labelX = (sx + ex) / 2
   let labelY = (sy + ey) / 2
 
+  const bend = bendOf(pinfo.index, pinfo.total)
   if (bend !== 0) {
     const c = edgeControlPoint(a, b, bend)
     ctx.beginPath()
@@ -346,13 +353,13 @@ export function drawScene(
   ctx.fill('evenodd')
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
-  const parallel = buildParallelInfo(graph.edges, graph.directed)
+  const parallel = buildParallelInfo(graph.edges)
   for (const e of graph.edges) {
     const a = byId.get(e.from)
     const b = byId.get(e.to)
     if (!a || !b) continue
-    const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
-    drawEdge(ctx, e, a, b, graph.directed, overlay, hover, bendOf(index, total))
+    const pinfo = parallel.get(e.id) ?? { index: 0, total: 1 }
+    drawEdge(ctx, e, a, b, graph.directed, overlay, hover, pinfo)
   }
 
   for (const n of graph.nodes) {
