@@ -160,6 +160,20 @@ export class GraphStore {
     e.cost = cost
   }
 
+  setNodeComment(id: string, comment: string) {
+    const n = this.graph.nodes.find((x) => x.id === id)
+    if (!n || (n.comment ?? '') === comment.trim()) return
+    this.commit()
+    n.comment = comment.trim() || undefined
+  }
+
+  setEdgeComment(id: string, comment: string) {
+    const e = this.graph.edges.find((x) => x.id === id)
+    if (!e || (e.comment ?? '') === comment.trim()) return
+    this.commit()
+    e.comment = comment.trim() || undefined
+  }
+
   setDirected(directed: boolean) {
     if (this.graph.directed === directed) return
     this.commit()

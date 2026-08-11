@@ -3,6 +3,10 @@
     <div class="dialog">
       <h3>编辑节点标签</h3>
       <input v-model="labelInput" class="input" @keydown.enter="save" />
+      <div class="field">
+        <span>注释</span>
+        <input v-model="nodeCommentInput" class="input" placeholder="可选" @keydown.enter="save" />
+      </div>
       <div class="dialog-actions">
         <button @click="close">取消</button>
         <button class="primary" @click="save">保存</button>
@@ -28,6 +32,10 @@
         <span>费用</span>
         <input v-model="costInput" class="input" placeholder="空表示未设置" />
       </div>
+      <div class="field">
+        <span>注释</span>
+        <input v-model="edgeCommentInput" class="input" placeholder="可选" />
+      </div>
       <div class="dialog-actions">
         <button @click="close">取消</button>
         <button class="primary" @click="saveEdge">保存</button>
@@ -42,9 +50,11 @@ import { graphStore } from '../store/graphStore'
 import { uiState } from '../store/ui'
 
 const labelInput = ref('')
+const nodeCommentInput = ref('')
 const weightInput = ref('')
 const capacityInput = ref('')
 const costInput = ref('')
+const edgeCommentInput = ref('')
 
 const node = computed(() => graphStore.graph.nodes.find((n) => n.id === uiState.editingNodeId) ?? null)
 const edge = computed(() => graphStore.graph.edges.find((e) => e.id === uiState.editingEdgeId) ?? null)
@@ -52,7 +62,10 @@ const fromLabel = computed(() => (edge.value ? graphStore.nodeLabel(edge.value.f
 const toLabel = computed(() => (edge.value ? graphStore.nodeLabel(edge.value.to) : ''))
 
 watch(node, (n) => {
-  if (n) labelInput.value = n.label
+  if (n) {
+    labelInput.value = n.label
+    nodeCommentInput.value = n.comment ?? ''
+  }
 })
 
 watch(edge, (e) => {
@@ -60,6 +73,7 @@ watch(edge, (e) => {
     weightInput.value = e.weight !== null ? String(e.weight) : ''
     capacityInput.value = e.capacity !== null ? String(e.capacity) : ''
     costInput.value = e.cost !== null ? String(e.cost) : ''
+    edgeCommentInput.value = e.comment ?? ''
   }
 })
 
@@ -73,6 +87,7 @@ function parseNum(s: string): number | null {
 function save() {
   if (node.value) {
     graphStore.setNodeLabel(node.value.id, labelInput.value.trim() || node.value.label)
+    graphStore.setNodeComment(node.value.id, nodeCommentInput.value)
   }
   close()
 }
@@ -80,6 +95,7 @@ function save() {
 function saveEdge() {
   if (edge.value) {
     graphStore.setEdgeProps(edge.value.id, parseNum(weightInput.value), parseNum(capacityInput.value), parseNum(costInput.value))
+    graphStore.setEdgeComment(edge.value.id, edgeCommentInput.value)
   }
   close()
 }

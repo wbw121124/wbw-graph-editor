@@ -1,23 +1,36 @@
 <template>
-  <canvas
-    ref="canvasRef"
-    class="graph-canvas"
-    @mousedown="handlers.onMouseDown"
-    @mousemove="handlers.onMouseMove"
-    @mouseup="handlers.onMouseUp"
-    @mouseleave="handlers.onMouseLeave"
-    @wheel="handlers.onWheel"
-  ></canvas>
+  <div class="graph-host">
+    <canvas
+      ref="canvasRef"
+      class="graph-canvas"
+      @mousedown="handlers.onMouseDown"
+      @mousemove="onCanvasMove"
+      @mouseup="handlers.onMouseUp"
+      @mouseleave="onCanvasLeave"
+      @wheel="handlers.onWheel"
+    ></canvas>
+    <div
+      v-if="tipVisible"
+      class="tooltip"
+      :style="{ left: tipX + 'px', top: tipY + 'px' }"
+      @mouseenter="lockTip"
+      @mouseleave="unlockTip"
+    >
+      <div v-for="line in tipLines" :key="line" class="tip-line">{{ line }}</div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { algoOverlay } from '../render/overlay'
+import { graphStyle } from '../store/theme'
 import {
   drawScene,
   fitView,
   fitWorld,
+  worldToScreen,
   type UiHoverState,
   type ViewTransform,
 } from '../render/canvasRenderer'
@@ -52,6 +65,13 @@ let resizeObserver: ResizeObserver | null = null
 let width = 0
 let height = 0
 let fitted = false
+let tipLock = false
+let tipTimer: number | undefined
+
+const tipVisible = ref(false)
+const tipX = ref(0)
+const tipY = ref(0)
+const tipLines = ref<string[]>([])
 
 function resize() {
   const el = canvasRef.value
@@ -76,6 +96,87 @@ function render() {
   drawScene(ctx, graphStore.graph, view, algoOverlay, hover, width, height)
 }
 
+function updateTip() {
+  if (tipLock) return
+  const g = graphStore.graph
+  const n = hover.hoverNodeId ? (g.nodes.find((x) => x.id === hover.hoverNodeId) ?? null) : null
+  const e = hover.hoverEdgeId ? (g.edges.find((x) => x.id === hover.hoverEdgeId) ?? null) : null
+  if (!n && !e) {
+    tipVisible.value = false
+    return
+  }
+  let wx = 0
+  let wy = 0
+  const lines: string[] = []
+  if (n) {
+    let degIn = 0
+    let degOut = 0
+    for (const ee of g.edges) {
+      if (!g.directed) {
+        if (ee.from === n.id || ee.to === n.id) degIn++
+      } else {
+        if (ee.from === n.id) degOut++
+        if (ee.to === n.id) degIn++
+      }
+    }
+    lines.push(`节点 ${n.id}`)
+    lines.push(`标签: ${n.label}`)
+    lines.push(g.directed ? `度数: 出 ${degOut} / 入 ${degIn}` : `度数: ${degIn}`)
+    lines.push(`位置: (${Math.round(n.x)}, ${Math.round(n.y)})`)
+    lines.push(`固定: ${n.fixed ? '是' : '否'}`)
+    const color = algoOverlay.nodeColors.get(n.id) ?? graphStyle.nodeFill
+    if (color) lines.push(`颜色: ${color}`)
+    if (n.comment) lines.push(`注释: ${n.comment}`)
+    wx = n.x
+    wy = n.y
+  } else if (e) {
+    const a = g.nodes.find((x) => x.id === e.from)
+    const b = g.nodes.find((x) => x.id === e.to)
+    lines.push(`边 ${e.id}`)
+    lines.push(`${graphStore.nodeLabel(e.from)} → ${graphStore.nodeLabel(e.to)}`)
+    if (e.weight !== null) lines.push(`权重: ${e.weight}`)
+    if (e.capacity !== null) lines.push(`容量: ${e.capacity}`)
+    if (e.cost !== null) lines.push(`费用: ${e.cost}`)
+    const color = algoOverlay.edgeColors.get(e.id) ?? graphStyle.edgeColor
+    if (color) lines.push(`颜色: ${color}`)
+    if (e.comment) lines.push(`注释: ${e.comment}`)
+    wx = a && b ? (a.x + b.x) / 2 : 0
+    wy = a && b ? (a.y + b.y) / 2 : 0
+  }
+  const s = worldToScreen(view, wx, wy)
+  tipX.value = Math.min(s.x + 16, width - 200)
+  tipY.value = Math.min(s.y + 16, height - 160)
+  tipLines.value = lines
+  tipVisible.value = true
+}
+
+function onCanvasMove(e: MouseEvent) {
+  handlers.onMouseMove(e)
+  updateTip()
+}
+
+function onCanvasLeave() {
+  clearTimeout(tipTimer)
+  tipTimer = window.setTimeout(() => {
+    if (!tipLock) tipVisible.value = false
+  }, 100)
+}
+
+function lockTip() {
+  tipLock = true
+  clearTimeout(tipTimer)
+}
+
+function unlockTip() {
+  tipLock = false
+  updateTip()
+}
+
+watch(
+  () => [hover.hoverNodeId, hover.hoverEdgeId],
+  () => updateTip(),
+)
+
 function loop(t = 0) {
   layoutTick(1, { width: WORLD_SIZE, height: WORLD_SIZE }, hover.draggingNodeId)
   render()
@@ -94,6 +195,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   cancelAnimationFrame(raf)
   resizeObserver?.disconnect()
+  clearTimeout(tipTimer)
 })
 
 defineExpose({
@@ -105,11 +207,40 @@ defineExpose({
 </script>
 
 <style scoped>
+.graph-host {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
 .graph-canvas {
   width: 100%;
   height: 100%;
   display: block;
   cursor: grab;
   touch-action: none;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 20;
+  min-width: 120px;
+  max-width: 200px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px var(--shadow);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.tip-line {
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

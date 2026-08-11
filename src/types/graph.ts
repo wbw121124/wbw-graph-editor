@@ -6,6 +6,7 @@ export interface GraphNode {
   x: number
   y: number
   fixed: boolean
+  comment?: string
 }
 
 export interface GraphEdge {
@@ -15,6 +16,7 @@ export interface GraphEdge {
   weight: number | null
   capacity: number | null
   cost: number | null
+  comment?: string
 }
 
 export interface GraphData {
