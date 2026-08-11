@@ -29,11 +29,15 @@ export function clamp(v: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, v))
 }
 
+export function fitWorld(view: ViewTransform, width: number, height: number) {
+  view.scale = clamp(Math.min((width - 80) / WORLD_SIZE, (height - 80) / WORLD_SIZE), 0.15, 1.5)
+  view.offsetX = width / 2 - (WORLD_SIZE / 2) * view.scale
+  view.offsetY = height / 2 - (WORLD_SIZE / 2) * view.scale
+}
+
 export function fitView(view: ViewTransform, graph: GraphData, width: number, height: number) {
   if (graph.nodes.length === 0) {
-    view.scale = 1
-    view.offsetX = width / 2
-    view.offsetY = height / 2
+    fitWorld(view, width, height)
     return
   }
   let minX = Infinity

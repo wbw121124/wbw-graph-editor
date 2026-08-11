@@ -17,6 +17,7 @@ import { algoOverlay } from '../render/overlay'
 import {
   drawScene,
   fitView,
+  fitWorld,
   type UiHoverState,
   type ViewTransform,
 } from '../render/canvasRenderer'
@@ -64,9 +65,9 @@ function resize() {
   }
   ctx = el.getContext('2d')
   ctx?.setTransform(dpr, 0, 0, dpr, 0, 0)
-  if (!fitted && graphStore.graph.nodes.length > 0) {
+  if (!fitted) {
     fitted = true
-    fitView(view, graphStore.graph, width, height)
+    fitWorld(view, width, height)
   }
 }
 

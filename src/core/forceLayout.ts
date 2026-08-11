@@ -1,5 +1,6 @@
 import { graphStore } from '../store/graphStore'
 import { graphStyle } from '../store/theme'
+import { WORLD_SIZE } from '../types/graph'
 
 export interface LayoutBounds {
   width: number
@@ -52,7 +53,8 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
     const dx = nodes[j].x - nodes[i].x
     const dy = nodes[j].y - nodes[i].y
     const d = Math.sqrt(dx * dx + dy * dy) || 1
-    const f = (d * d) / k
+    const repK = graphStyle.repulsionK
+    const f = repK > 0 ? (d * d) / k : (d - k) * 2
     const ux = dx / d
     const uy = dy / d
     fx[i] += ux * f
@@ -61,9 +63,10 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
     fy[j] -= uy * f
   }
 
+  const worldCenter = WORLD_SIZE / 2
   for (let i = 0; i < n; i++) {
-    fx[i] -= nodes[i].x * 0.003
-    fy[i] -= nodes[i].y * 0.003
+    fx[i] += (worldCenter - nodes[i].x) * 0.003
+    fy[i] += (worldCenter - nodes[i].y) * 0.003
   }
 
   const speed = 0.06 * dt
