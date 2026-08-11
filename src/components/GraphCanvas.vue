@@ -67,6 +67,8 @@ let height = 0
 let fitted = false
 let tipLock = false
 let tipTimer: number | undefined
+let lastMouseX = 0
+let lastMouseY = 0
 
 const tipVisible = ref(false)
 const tipX = ref(0)
@@ -105,8 +107,6 @@ function updateTip() {
     tipVisible.value = false
     return
   }
-  let wx = 0
-  let wy = 0
   const lines: string[] = []
   if (n) {
     let degIn = 0
@@ -127,11 +127,7 @@ function updateTip() {
     const color = algoOverlay.nodeColors.get(n.id) ?? graphStyle.nodeFill
     if (color) lines.push(`颜色: ${color}`)
     if (n.comment) lines.push(`注释: ${n.comment}`)
-    wx = n.x
-    wy = n.y
   } else if (e) {
-    const a = g.nodes.find((x) => x.id === e.from)
-    const b = g.nodes.find((x) => x.id === e.to)
     lines.push(`边 ${e.id}`)
     lines.push(`${graphStore.nodeLabel(e.from)} → ${graphStore.nodeLabel(e.to)}`)
     if (e.weight !== null) lines.push(`权重: ${e.weight}`)
@@ -140,17 +136,19 @@ function updateTip() {
     const color = algoOverlay.edgeColors.get(e.id) ?? graphStyle.edgeColor
     if (color) lines.push(`颜色: ${color}`)
     if (e.comment) lines.push(`注释: ${e.comment}`)
-    wx = a && b ? (a.x + b.x) / 2 : 0
-    wy = a && b ? (a.y + b.y) / 2 : 0
   }
-  const s = worldToScreen(view, wx, wy)
-  tipX.value = Math.min(s.x + 16, width - 200)
-  tipY.value = Math.min(s.y + 16, height - 160)
+  const sideX = lastMouseX < width / 2 ? 1 : -1
+  const sideY = lastMouseY < height / 2 ? 1 : -1
+  tipX.value = Math.min(Math.max(lastMouseX + sideX * 16, 4), width - 208)
+  tipY.value = Math.min(Math.max(lastMouseY + sideY * 16, 4), height - 150)
   tipLines.value = lines
   tipVisible.value = true
 }
 
 function onCanvasMove(e: MouseEvent) {
+  const rect = canvasRef.value!.getBoundingClientRect()
+  lastMouseX = e.clientX - rect.left
+  lastMouseY = e.clientY - rect.top
   handlers.onMouseMove(e)
   updateTip()
 }
