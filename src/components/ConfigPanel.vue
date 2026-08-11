@@ -16,6 +16,7 @@
       <input v-model.number="style.repulsionK" type="range" min="0" max="6000000" step="100000" />
       <span class="val">{{ style.repulsionK.toExponential(1).replace('e+', 'e') }}</span>
     </div>
+    <p v-if="repOff" class="rep-off">节点数 > 300，排斥力已自动关闭</p>
     <div class="cfg-row">
       <span class="label">节点填充</span>
       <input v-model="style.nodeFill" type="color" />
@@ -41,9 +42,13 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { graphStyle } from '../store/theme'
+import { graphStore } from '../store/graphStore'
+import { REPULSION_AUTO_OFF_THRESHOLD } from '../core/forceLayout'
 
 const style = graphStyle
+const repOff = computed(() => graphStore.graph.nodes.length > REPULSION_AUTO_OFF_THRESHOLD)
 </script>
 
 <style scoped>
@@ -96,5 +101,11 @@ const style = graphStyle
   gap: 6px;
   font-size: 12px;
   color: var(--text);
+}
+
+.rep-off {
+  margin: -4px 0 8px;
+  font-size: 11.5px;
+  color: var(--accent);
 }
 </style>

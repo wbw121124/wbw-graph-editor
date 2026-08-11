@@ -7,6 +7,8 @@ export interface LayoutBounds {
   height: number
 }
 
+export const REPULSION_AUTO_OFF_THRESHOLD = 300
+
 export function clampLayout(v: number, lo: number, hi: number) {
   return Math.min(hi, Math.max(lo, v))
 }
@@ -18,26 +20,29 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
   const k = graphStyle.edgeIdealLength
   const fx = new Float64Array(n)
   const fy = new Float64Array(n)
+  const disableRep = n > REPULSION_AUTO_OFF_THRESHOLD
 
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      let dx = nodes[i].x - nodes[j].x
-      let dy = nodes[i].y - nodes[j].y
-      let d2 = dx * dx + dy * dy
-      if (d2 < 1) {
-        dx = (Math.random() - 0.5) * 2
-        dy = (Math.random() - 0.5) * 2
-        d2 = 1
+  if (!disableRep) {
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        let dx = nodes[i].x - nodes[j].x
+        let dy = nodes[i].y - nodes[j].y
+        let d2 = dx * dx + dy * dy
+        if (d2 < 1) {
+          dx = (Math.random() - 0.5) * 2
+          dy = (Math.random() - 0.5) * 2
+          d2 = 1
+        }
+        const d = Math.sqrt(d2)
+        const repK = graphStyle.repulsionK
+        const f = repK / d2
+        const ux = dx / d
+        const uy = dy / d
+        fx[i] += ux * f
+        fy[i] += uy * f
+        fx[j] -= ux * f
+        fy[j] -= uy * f
       }
-      const d = Math.sqrt(d2)
-      const repK = graphStyle.repulsionK
-      const f = repK / d2
-      const ux = dx / d
-      const uy = dy / d
-      fx[i] += ux * f
-      fy[i] += uy * f
-      fx[j] -= ux * f
-      fy[j] -= uy * f
     }
   }
 
