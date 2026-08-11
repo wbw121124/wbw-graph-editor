@@ -43,12 +43,12 @@ const THEMES: Record<ThemeName, CanvasTheme> = {
   },
 }
 
-const stored = localStorage.getItem('wbw-theme')
+const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('wbw-theme') : null
 export const themeName = ref<ThemeName>(stored === 'light' ? 'light' : 'dark')
 
 export function toggleTheme() {
   themeName.value = themeName.value === 'dark' ? 'light' : 'dark'
-  localStorage.setItem('wbw-theme', themeName.value)
+  if (typeof localStorage !== 'undefined') localStorage.setItem('wbw-theme', themeName.value)
 }
 
 export const canvasTheme = computed(() => THEMES[themeName.value])

@@ -7,6 +7,7 @@
       <button @click="treeLayout">树形排列</button>
       <button @click="fit">适应视图</button>
       <button @click="downloadPng">下载 PNG</button>
+      <button @click="downloadSvg">下载 SVG</button>
       <button @click="showMarkup">生成标记</button>
     </div>
   </div>
@@ -18,6 +19,7 @@ import { arrangeAsTree } from '../core/treeLayout'
 import { generateTikZ } from '../core/markup'
 import { uiState } from '../store/ui'
 import { drawScene, type UiHoverState } from '../render/canvasRenderer'
+import { buildSvg } from '../render/svgExport'
 import { algoOverlay } from '../render/overlay'
 import { WORLD_SIZE } from '../types/graph'
 import type GraphCanvas from './GraphCanvas.vue'
@@ -39,7 +41,7 @@ function fit() {
 }
 
 function downloadPng() {
-  const exportScale = 2
+  const exportScale = graphStore.graph.nodes.length > 300 ? 3 : 4
   const size = WORLD_SIZE * exportScale
   const cv = document.createElement('canvas')
   cv.width = size
@@ -63,11 +65,23 @@ function downloadPng() {
     emptyHover,
     WORLD_SIZE,
     WORLD_SIZE,
+    false,
   )
   const a = document.createElement('a')
   a.download = 'graph.png'
   a.href = cv.toDataURL('image/png')
   a.click()
+}
+
+function downloadSvg() {
+  const svg = buildSvg(graphStore.graph, algoOverlay)
+  const blob = new Blob([svg], { type: 'image/svg+xml' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'graph.svg'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function showMarkup() {

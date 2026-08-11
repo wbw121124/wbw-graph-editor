@@ -328,6 +328,7 @@ export function drawScene(
   hover: UiHoverState,
   width: number,
   height: number,
+  showWorldBounds = true,
 ) {
   const theme = canvasTheme.value
   ctx.clearRect(0, 0, width, height)
@@ -350,11 +351,13 @@ export function drawScene(
   const wy0 = -view.offsetY / view.scale
   const wx1 = wx0 + width / view.scale
   const wy1 = wy0 + height / view.scale
-  ctx.beginPath()
-  ctx.rect(wx0, wy0, wx1 - wx0, wy1 - wy0)
-  ctx.rect(0, 0, WORLD_SIZE, WORLD_SIZE)
-  ctx.fillStyle = 'rgba(255,0,0,0.25)'
-  ctx.fill('evenodd')
+  if (showWorldBounds) {
+    ctx.beginPath()
+    ctx.rect(wx0, wy0, wx1 - wx0, wy1 - wy0)
+    ctx.rect(0, 0, WORLD_SIZE, WORLD_SIZE)
+    ctx.fillStyle = 'rgba(255,0,0,0.25)'
+    ctx.fill('evenodd')
+  }
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
   const parallel = buildParallelInfo(graph.edges)
@@ -385,9 +388,11 @@ export function drawScene(
     }
   }
 
-  ctx.strokeStyle = 'rgba(255,0,0,0.5)'
-  ctx.lineWidth = 1.6
-  ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE)
+  if (showWorldBounds) {
+    ctx.strokeStyle = 'rgba(255,0,0,0.5)'
+    ctx.lineWidth = 1.6
+    ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE)
+  }
 
   ctx.restore()
 }
