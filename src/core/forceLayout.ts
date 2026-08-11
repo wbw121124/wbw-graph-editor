@@ -41,10 +41,14 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
   }
 
   const idxById = new Map(nodes.map((nd, idx) => [nd.id, idx]))
+  const springPairs = new Set<number>()
   for (const e of edges) {
     const i = idxById.get(e.from)
     const j = idxById.get(e.to)
     if (i === undefined || j === undefined || i === j) continue
+    const pair = i < j ? i * nodes.length + j : j * nodes.length + i
+    if (springPairs.has(pair)) continue
+    springPairs.add(pair)
     const dx = nodes[j].x - nodes[i].x
     const dy = nodes[j].y - nodes[i].y
     const d = Math.sqrt(dx * dx + dy * dy) || 1
