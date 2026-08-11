@@ -339,13 +339,11 @@ export function drawScene(
   const wy0 = -view.offsetY / view.scale
   const wx1 = wx0 + width / view.scale
   const wy1 = wy0 + height / view.scale
+  ctx.beginPath()
+  ctx.rect(wx0, wy0, wx1 - wx0, wy1 - wy0)
+  ctx.rect(0, 0, WORLD_SIZE, WORLD_SIZE)
   ctx.fillStyle = 'rgba(255,0,0,0.25)'
-  const ovW = Math.max(0, Math.min(wx1, WORLD_SIZE) - Math.max(wx0, 0))
-  const ovH = Math.max(0, Math.min(wy1, WORLD_SIZE) - Math.max(wy0, 0))
-  ctx.fillRect(Math.max(wx0, 0), wy0, ovW, Math.max(0, -wy0))
-  ctx.fillRect(Math.max(wx0, 0), Math.max(wy0, WORLD_SIZE), ovW, Math.max(0, wy1 - WORLD_SIZE))
-  ctx.fillRect(wx0, Math.max(wy0, 0), Math.max(0, -wx0), ovH)
-  ctx.fillRect(Math.max(wx0, WORLD_SIZE), Math.max(wy0, 0), Math.max(0, wx1 - WORLD_SIZE), ovH)
+  ctx.fill('evenodd')
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
   const parallel = buildParallelInfo(graph.edges, graph.directed)
