@@ -57,7 +57,7 @@ export class AlgorithmRunner {
     const exec = async () => {
       try {
         await run(api)
-        if (this.status !== 'done') this.finish()
+        if (this.status !== 'done' && !this.pendingResolve) this.finish()
       } catch (err) {
         this.applyEvent({ type: 'log', message: `错误: ${String(err)}` })
         this.finish('执行出错')
