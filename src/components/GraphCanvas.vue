@@ -10,18 +10,15 @@
       @wheel="handlers.onWheel"
     ></canvas>
     <Transition name="tip">
-    <div
-      v-if="tipVisible"
-      ref="tipEl"
-      class="tooltip"
-      :style="{ left: tipX + 'px', top: tipY + 'px' }"
-      @mouseenter="onTipEnter"
-      @mousemove="onTipMove"
-      @mouseleave="unlockTip"
-    >
-      <div v-for="line in tipLines" :key="line" class="tip-line">{{ line }}</div>
-    </div>
-  </Transition>
+      <div
+        v-if="tipVisible"
+        ref="tipEl"
+        class="tooltip"
+        :style="{ left: tipX + 'px', top: tipY + 'px' }"
+      >
+        <div v-for="line in tipLines" :key="line" class="tip-line">{{ line }}</div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -69,7 +66,6 @@ let resizeObserver: ResizeObserver | null = null
 let width = 0
 let height = 0
 let fitted = false
-let tipLock = false
 let tipTimer: number | undefined
 let lastMouseX = 0
 let lastMouseY = 0
@@ -109,30 +105,11 @@ function placeTip(mx: number, my: number) {
   const tipW = el.offsetWidth || 160
   const tipH = el.offsetHeight || 120
   const gap = 12
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  const maxX = vw - tipW
-  const maxY = vh - tipH
-  const xs = mx < vw / 2 ? [mx + gap, mx - tipW - gap] : [mx - tipW - gap, mx + gap]
-  const ys = my < vh / 2 ? [my + gap, my - tipH - gap] : [my - tipH - gap, my + gap]
-  for (const x0 of xs) {
-    for (const y0 of ys) {
-      const x = Math.min(Math.max(x0, 0), maxX)
-      const y = Math.min(Math.max(y0, 0), maxY)
-      const covers = mx >= x && mx <= x + tipW && my >= y && my <= y + tipH
-      if (!covers) {
-        tipX.value = x
-        tipY.value = y
-        return
-      }
-    }
-  }
-  tipX.value = Math.min(Math.max(mx + gap, 0), maxX)
-  tipY.value = Math.min(Math.max(my + gap, 0), maxY)
+  tipX.value = Math.min(Math.max(mx + gap, 4), window.innerWidth - tipW)
+  tipY.value = Math.min(Math.max(my + gap, 4), window.innerHeight - tipH)
 }
 
 function updateTip() {
-  if (tipLock) return
   const g = graphStore.graph
   const n = hover.hoverNodeId ? (g.nodes.find((x) => x.id === hover.hoverNodeId) ?? null) : null
   const e = hover.hoverEdgeId ? (g.edges.find((x) => x.id === hover.hoverEdgeId) ?? null) : null
@@ -185,31 +162,8 @@ function onCanvasMove(e: MouseEvent) {
 function onCanvasLeave() {
   clearTimeout(tipTimer)
   tipTimer = window.setTimeout(() => {
-    if (!tipLock) tipVisible.value = false
+    tipVisible.value = false
   }, 100)
-}
-
-function lockTip() {
-  tipLock = true
-  clearTimeout(tipTimer)
-}
-
-function onTipEnter(e: MouseEvent) {
-  lockTip()
-  lastMouseX = e.clientX
-  lastMouseY = e.clientY
-  placeTip(e.clientX, e.clientY)
-}
-
-function onTipMove(e: MouseEvent) {
-  lastMouseX = e.clientX
-  lastMouseY = e.clientY
-  placeTip(e.clientX, e.clientY)
-}
-
-function unlockTip() {
-  tipLock = false
-  updateTip()
 }
 
 watch(
@@ -271,7 +225,7 @@ defineExpose({
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 6px 20px var(--shadow);
-  pointer-events: auto;
+  pointer-events: none;
   user-select: none;
 }
 
