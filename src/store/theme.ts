@@ -91,4 +91,5 @@ export const graphStyle = reactive<GraphStyle>({
   nodeFontSize: 13,
   arrowSize: 9,
   gridSpacing: 50,
+  maxMoveStep: 50,
 })

@@ -58,8 +58,7 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
     const dx = nodes[j].x - nodes[i].x
     const dy = nodes[j].y - nodes[i].y
     const d = Math.sqrt(dx * dx + dy * dy) || 1
-    const repK = graphStyle.repulsionK
-    const f = repK > 0 ? (d * d) / k : (d - k) * 2
+    const f = (d - k) * 2
     const ux = dx / d
     const uy = dy / d
     fx[i] += ux * f
@@ -80,7 +79,7 @@ export function layoutTick(dt = 1, bounds?: LayoutBounds, skipId: string | null 
     if (node.fixed || node.id === skipId) continue
     const mag = Math.hypot(fx[i], fy[i])
     if (mag === 0) continue
-    const step = Math.min(mag, 50) * speed
+    const step = Math.min(mag, graphStyle.maxMoveStep) * speed
     node.x += (fx[i] / mag) * step
     node.y += (fy[i] / mag) * step
     if (bounds) {

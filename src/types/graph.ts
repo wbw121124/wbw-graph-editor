@@ -41,4 +41,5 @@ export interface GraphStyle {
   nodeFontSize: number
   arrowSize: number
   gridSpacing: number
+  maxMoveStep: number
 }

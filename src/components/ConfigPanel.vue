@@ -37,6 +37,11 @@
       <input v-model.number="style.gridSpacing" type="range" min="20" max="120" step="5" />
       <span class="val">{{ style.gridSpacing }}</span>
     </div>
+    <div class="cfg-row">
+      <span class="label">{{ t('cfg.maxStep') }}</span>
+      <input v-model.number="style.maxMoveStep" type="range" min="5" max="200" step="5" />
+      <span class="val">{{ style.maxMoveStep }}</span>
+    </div>
     <div class="color-block">
       <div class="cfg-row">
         <span class="label">{{ t('cfg.nodeFill') }}</span>
