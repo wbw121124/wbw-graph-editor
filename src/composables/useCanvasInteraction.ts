@@ -180,7 +180,10 @@ export function useCanvasInteraction(
   function onDblClick(e: MouseEvent) {
     const { mx, my } = localPos(e)
     if (uiState.mode === 'draw') {
-      // draw 模式:双击永远加节点,不弹编辑框
+      // draw 模式:双击永远加节点,不弹编辑框;并清掉残留的连边待选状态,连续双击互不干扰
+      hover.selectedNodeId = null
+      hover.tempEdgeFromId = null
+      hover.tempEdgeTarget = null
       const w = screenToWorld(view, mx, my)
       graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
       return
