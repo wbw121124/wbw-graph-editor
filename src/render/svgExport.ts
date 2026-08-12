@@ -42,7 +42,7 @@ function edgeMarkup(
   directed: boolean,
   overlay: AlgoOverlayState,
   pinfo: { index: number; total: number },
-): string {
+): { markup: string; label: { x: number; y: number; text: string } | null } {
   const theme = canvasTheme.value
   const r = nodeRadius()
   const color = overlay.edgeColors.get(e.id) ?? (graphStyle.edgeColor || theme.edgeColor)
@@ -57,28 +57,19 @@ function edgeMarkup(
     const { index, total } = pinfo
     const g = selfLoopGeometry(a, r, index, total)
     parts.push(
-      `<path d="M ${num(g.sx)} ${num(g.sy)} C ${num(g.cx1)} ${num(g.cy1)} ${num(g.cx2)} ${num(g.cy2)} ${num(g.ex)} ${num(g.ey)}" fill="none" stroke="${esc(color)}" stroke-width="${width}"/>`,
+      `<path d="M ${num(g.sx)} ${num(g.sy)} A ${num(g.R)} ${num(g.R)} 0 1 0 ${num(g.ex)} ${num(g.ey)}" fill="none" stroke="${esc(color)}" stroke-width="${width}"/>`,
     )
     if (directed) {
-      const tdx = g.ex - g.cx2
-      const tdy = g.ey - g.cy2
-      const tl = Math.hypot(tdx, tdy) || 1
+      const dx = Math.sin(g.a1)
+      const dy = -Math.cos(g.a1)
       parts.push(
-        `<polygon points="${arrowPoints(g.ex - (tdx / tl) * r, g.ey - (tdy / tl) * r, g.ex, g.ey, arrow)}" fill="${esc(color)}"/>`,
+        `<polygon points="${arrowPoints(g.ex - dx * arrow, g.ey - dy * arrow, g.ex, g.ey, arrow)}" fill="${esc(color)}"/>`,
       )
     }
     if (text) {
-      const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
-      const h = fs + 6
-      const w = approxTextWidth(text, fs) + 8
-      const lx = (g.sx + 3 * g.cx1 + 3 * g.cx2 + g.ex) / 8
-      const ly = (g.sy + 3 * g.cy1 + 3 * g.cy2 + g.ey) / 8
-      parts.push(`<rect x="${num(lx - w / 2)}" y="${num(ly - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
-      parts.push(
-        `<text x="${num(lx)}" y="${num(ly)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
-      )
+      return { markup: parts.join(''), label: { x: g.cx, y: g.cy - g.R, text } }
     }
-    return parts.join('')
+    return { markup: parts.join(''), label: null }
   }
 
   const dx = b.x - a.x
@@ -118,15 +109,20 @@ function edgeMarkup(
   }
 
   if (text) {
-    const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
-    const h = fs + 6
-    const w = approxTextWidth(text, fs) + 8
-    parts.push(`<rect x="${num(labelX - w / 2)}" y="${num(labelY - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
-    parts.push(
-      `<text x="${num(labelX)}" y="${num(labelY)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
-    )
+    return { markup: parts.join(''), label: { x: labelX, y: labelY, text } }
   }
-  return parts.join('')
+  return { markup: parts.join(''), label: null }
+}
+
+function labelMarkup(l: { x: number; y: number; text: string }): string {
+  const theme = canvasTheme.value
+  const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
+  const h = fs + 6
+  const w = approxTextWidth(l.text, fs) + 8
+  return (
+    `<rect x="${num(l.x - w / 2)}" y="${num(l.y - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>` +
+    `<text x="${num(l.x)}" y="${num(l.y)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(l.text)}</text>`
+  )
 }
 
 function nodeMarkup(n: GraphNode, overlay: AlgoOverlayState): string {
@@ -191,12 +187,18 @@ export function buildSvg(graph: GraphData, overlay: AlgoOverlayState, opts: SvgE
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
   const parallel = buildParallelInfo(graph.edges)
+  const labels: { x: number; y: number; text: string }[] = []
   for (const e of graph.edges) {
     const a = byId.get(e.from)
     const b = byId.get(e.to)
     if (!a || !b) continue
     const pinfo = parallel.get(e.id) ?? { index: 0, total: 1 }
-    parts.push(edgeMarkup(e, a, b, graph.directed, overlay, pinfo))
+    const res = edgeMarkup(e, a, b, graph.directed, overlay, pinfo)
+    parts.push(res.markup)
+    if (res.label) labels.push(res.label)
+  }
+  for (const l of labels) {
+    parts.push(labelMarkup(l))
   }
   for (const n of graph.nodes) {
     parts.push(nodeMarkup(n, overlay))

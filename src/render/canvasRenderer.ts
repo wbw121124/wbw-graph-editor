@@ -107,7 +107,7 @@ export function buildParallelInfo(edges: GraphEdge[]): Map<string, { index: numb
       g = { dir0: [], dir1: [] }
       groups.set(k, g)
     }
-    ;(e.from <= e.to ? g.dir0 : g.dir1).push(e.id)
+    ; (e.from <= e.to ? g.dir0 : g.dir1).push(e.id)
   }
   const info = new Map<string, { index: number; total: number }>()
   for (const g of groups.values()) {
@@ -153,18 +153,19 @@ export function cubicPoint(a: { x: number; y: number }, c1: { x: number; y: numb
 }
 
 export function selfLoopGeometry(a: { x: number; y: number }, r: number, index: number, total: number) {
-  // 同节点的自环共用同一对锚点方向:出口在正左、入口在正右(相差180°)
-  // 控制点沿锚点切线竖直出发(不切穿节点圆),多条自环靠垂向错开
-  const bulge = r * 3 + index * r * 2
-  const sx = a.x - r
-  const sy = a.y
-  const ex = a.x + r
-  const ey = a.y
-  const cx1 = a.x - r
-  const cy1 = a.y - bulge * 0.7
-  const cx2 = a.x + r
-  const cy2 = a.y - bulge * 0.7
-  return { sx, sy, ex, ey, cx1, cy1, cx2, cy2 }
+  // 自环 = 纯圆弧(无直线段): 出口锚点 P' = 节点正右方 (a.x + r, a.y), 入口锚点 P = 节点正上方 (a.x, a.y - r);
+  // P、P' 同时位于节点圆与自环弧圆上: 所有自环的弧圆半径满足 R² = (R到弦中点距离)² + (r√2/2)²;
+  // 第一条(index 0)是 3/4 圆弧: 半径 R = r, 圆心 = (a.x + r, a.y - r), 圆心角 270°,
+  //   在 P' 处沿半径水平向右、P 处沿半径竖直向下(均垂直于节点圆于锚点);
+  // 其他自环半径 R = r·(1+index) 更大、圆心角 θ = 2π - 2·arcsin(r√2/(2R)) 更大, 沿弦 P'P 的中垂线外移绕开;
+  // 任意两条自环只在 P'、P 两处相交(两弧圆均经过 P'、P)
+  const R = r * (1 + index)
+  const h = Math.sqrt(R * R - (r * r) / 2) / Math.SQRT2
+  const cx = a.x + r / 2 + h
+  const cy = a.y - r / 2 - h
+  const a0 = Math.atan2(a.y - cy, a.x + r - cx)
+  const a1 = Math.atan2(a.y - r - cy, a.x - cx)
+  return { R, cx, cy, sx: a.x + r, sy: a.y, ex: a.x, ey: a.y - r, a0, a1 }
 }
 
 function arrowHead(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, size: number) {
@@ -188,7 +189,7 @@ function drawEdge(
   overlay: AlgoOverlayState,
   hover: UiHoverState,
   pinfo: { index: number; total: number },
-) {
+): { x: number; y: number; text: string } | null {
   const theme = canvasTheme.value
   const r = nodeRadius()
   const isAlgo = overlay.edgeColors.has(e.id)
@@ -205,19 +206,18 @@ function drawEdge(
     const g = selfLoopGeometry(a, r, index, total)
     ctx.beginPath()
     ctx.moveTo(g.sx, g.sy)
-    ctx.bezierCurveTo(g.cx1, g.cy1, g.cx2, g.cy2, g.ex, g.ey)
+    ctx.arc(g.cx, g.cy, g.R, g.a0, g.a1, true)
     ctx.stroke()
     if (directed) {
-      const tdx = g.ex - g.cx2
-      const tdy = g.ey - g.cy2
-      const tl = Math.hypot(tdx, tdy) || 1
-      arrowHead(ctx, { x: g.ex - (tdx / tl) * r, y: g.ey - (tdy / tl) * r }, { x: g.ex, y: g.ey }, arrow)
+      const dx = Math.sin(g.a1)
+      const dy = -Math.cos(g.a1)
+      arrowHead(ctx, { x: g.ex - dx * arrow, y: g.ey - dy * arrow }, { x: g.ex, y: g.ey }, arrow)
     }
     const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
     if (text) {
-      drawEdgeLabel(ctx, (g.sx + 3 * g.cx1 + 3 * g.cx2 + g.ex) / 8, (g.sy + 3 * g.cy1 + 3 * g.cy2 + g.ey) / 8, text, theme)
+      return { x: g.cx, y: g.cy - g.R, text }
     }
-    return
+    return null
   }
 
   const dx = b.x - a.x
@@ -262,8 +262,9 @@ function drawEdge(
 
   const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
   if (text) {
-    drawEdgeLabel(ctx, labelX, labelY, text, theme)
+    return { x: labelX, y: labelY, text }
   }
+  return null
 }
 
 function drawEdgeLabel(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, theme: { bg: string; labelColor: string }) {
@@ -392,12 +393,17 @@ export function drawScene(
 
   const byId = new Map(graph.nodes.map((n) => [n.id, n]))
   const parallel = buildParallelInfo(graph.edges)
+  const labels: { x: number; y: number; text: string }[] = []
   for (const e of graph.edges) {
     const a = byId.get(e.from)
     const b = byId.get(e.to)
     if (!a || !b) continue
     const pinfo = parallel.get(e.id) ?? { index: 0, total: 1 }
-    drawEdge(ctx, e, a, b, graph.directed, overlay, hover, pinfo)
+    const lbl = drawEdge(ctx, e, a, b, graph.directed, overlay, hover, pinfo)
+    if (lbl) labels.push(lbl)
+  }
+  for (const l of labels) {
+    drawEdgeLabel(ctx, l.x, l.y, l.text, theme)
   }
 
   for (const n of graph.nodes) {

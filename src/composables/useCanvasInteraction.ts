@@ -7,7 +7,6 @@ import {
   bendOf,
   buildParallelInfo,
   clamp,
-  cubicPoint,
   edgeControlPoint,
   quadPoint,
   screenToWorld,
@@ -67,10 +66,12 @@ export function useCanvasInteraction(
       const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
       if (a === b) {
         const g = selfLoopGeometry(a, graphStyle.nodeRadius, index, total)
+        const sweep = g.a0 - (g.a1 - Math.PI * 2)
         let d = Infinity
         let prev = { x: g.sx, y: g.sy }
-        for (let s = 1; s <= 12; s++) {
-          const cur = cubicPoint({ x: g.sx, y: g.sy }, { x: g.cx1, y: g.cy1 }, { x: g.cx2, y: g.cy2 }, { x: g.ex, y: g.ey }, s / 12)
+        for (let s = 1; s <= 24; s++) {
+          const th = g.a0 - (sweep * s) / 24
+          const cur = { x: g.cx + g.R * Math.cos(th), y: g.cy + g.R * Math.sin(th) }
           d = Math.min(d, distToSegment(p.x, p.y, prev.x, prev.y, cur.x, cur.y))
           prev = cur
         }

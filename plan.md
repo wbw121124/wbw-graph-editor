@@ -7,10 +7,10 @@ wbw-graph-editor：基于 Vue3 + Canvas 的图论算法教学工具 —— 支�
 CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL PASS），修复实测发现的 2 个 bug。
 
 ### 已完成改动
-| 文件 | 改动 |
-|---|---|
-| `src/components/GraphCanvas.vue` | tooltip 首次显示时 ref 未绑定导致定位停在 (0,0)——`updateTip()` 末尾追加 `nextTick(() => placeTip(lastMouseX, lastMouseY))` |
-| `src/components/LeftPanel.vue` | deep watcher 同步 textarea 时未更新 `lastLoaded`，图变化（如有向/无向切换）会把 500ms 防抖窗口内未载入的编辑回退——watcher 同步时同时更新 `lastLoaded` |
+| 文件                             | 改动                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/GraphCanvas.vue` | tooltip 首次显示时 ref 未绑定导致定位停在 (0,0)——`updateTip()` 末尾追加 `nextTick(() => placeTip(lastMouseX, lastMouseY))`                            |
+| `src/components/LeftPanel.vue`   | deep watcher 同步 textarea 时未更新 `lastLoaded`，图变化（如有向/无向切换）会把 500ms 防抖窗口内未载入的编辑回退——watcher 同步时同时更新 `lastLoaded` |
 
 ### 验证结果（无头 Edge + CDP 实测，全部通过）
 - [x] `npx vue-tsc --noEmit` 通过；`npm run build` 通过
@@ -51,3 +51,6 @@ CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL 
 - draw 模式双击加点（不再双击弹编辑框），单击空白不再加点（模式提示同步更新）
 - draw 快速连击被浏览器合并为单次 dblclick（第 3/4 次只发 click detail 递增），改为点击链计数（500ms/8px 链、偶数次=双击加点），dblclick 兜底 80ms 去重；4 连击实测 [2,0]，两对双击 [4,0]（2+1+1 正确），cdp-test13 21 项全过（a4a6847）
 - 力导向：repulsionK>0 时弹簧力误用 d²/k（恒吸引、无胡克恢复，理想长度近乎无感），改为恒用 (d-k)*2；`Math.min(mag,50)` 步长上限提为可调 `maxMoveStep`（ConfigPanel 滑块 5-200）；Node 单测验证（k=300 收敛≈309，旧≈151；cap 5/200 快慢区分；repK=0 收敛 120 无回归）（35214d9）
+
+## 写给大语言模型
+请你使用中文思考进行思考，每次修改后请记得 `git commit`
