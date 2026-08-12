@@ -4,13 +4,29 @@
     <div class="log-list">
       <div v-for="(l, i) in algoRunner.logs.value" :key="i" class="log-line">{{ l }}</div>
     </div>
-    <button class="clear-btn" @click="algoRunner.logs.value = []">{{ t('log.clear') }}</button>
+    <div class="log-actions">
+      <button class="clear-btn" @click="algoRunner.logs.value = []">{{ t('log.clear') }}</button>
+      <button class="clear-btn" @click="exportLogs">{{ t('log.export') }}</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { algoRunner } from '../algorithms/runner'
 import { t } from '../i18n'
+
+function exportLogs() {
+  const lines = algoRunner.logs.value
+  const head = `${t('log.title')} - ${new Date().toLocaleString()}`
+  const text = [head, '='.repeat(40), ...lines].join('\n')
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'algo-log.txt'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <style scoped>
@@ -37,9 +53,14 @@ import { t } from '../i18n'
 }
 
 .clear-btn {
-  align-self: flex-end;
-  margin-top: 6px;
   padding: 3px 10px;
   font-size: 11px;
+}
+
+.log-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
 }
 </style>

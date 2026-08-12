@@ -112,9 +112,15 @@ export const messages: Record<Locale, Messages> = {
     'ctrl.reset': '重置',
     'ctrl.speed': '速度',
     'ctrl.done': '完成',
+    'ctrl.bookmarkAdd': '＋ 书签',
+    'ctrl.bookmarks': '书签',
+    'ctrl.bookmarkJump': '点击跳转到该步骤',
+
+    'bookmark.prefix': '书签',
 
     'log.title': '日志',
     'log.clear': '清空',
+    'log.export': '导出日志',
 
     'ce.title': '自定义算法',
     'ce.run': '运行',
@@ -431,9 +437,15 @@ export const messages: Record<Locale, Messages> = {
     'ctrl.reset': 'Reset',
     'ctrl.speed': 'Speed',
     'ctrl.done': 'Done',
+    'ctrl.bookmarkAdd': '+ Bookmark',
+    'ctrl.bookmarks': 'Bookmarks',
+    'ctrl.bookmarkJump': 'Jump to this step',
+
+    'bookmark.prefix': 'Bookmark',
 
     'log.title': 'Log',
     'log.clear': 'Clear',
+    'log.export': 'Export log',
 
     'ce.title': 'Custom algorithm',
     'ce.run': 'Run',

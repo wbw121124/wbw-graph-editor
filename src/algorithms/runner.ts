@@ -5,6 +5,12 @@ import type { AlgoEvent, AlgoStep, MatrixData } from './types'
 
 export type AlgoStatus = 'idle' | 'running' | 'paused' | 'done'
 
+export interface AlgoBookmark {
+  id: number
+  name: string
+  stepIndex: number
+}
+
 export interface UserVisualAPI {
   step: () => Promise<void>
   emit: (ev: AlgoEvent) => void
@@ -19,20 +25,32 @@ export class AlgorithmRunner {
   logs = ref<string[]>([])
   matrix = ref<MatrixData | null>(null)
   doneMessage = ref('')
+  bookmarks = ref<AlgoBookmark[]>([])
 
   private gen: Generator<AlgoStep> | null = null
+  private genMode = false
   private timer: number | undefined
   private pendingResolve: (() => void) | null = null
+  private executedSteps: AlgoStep[] = []
+  private replayAnchor: number | null = null
 
   get isActive() {
     return this.status === 'running' || this.status === 'paused'
+  }
+
+  get canBookmark() {
+    return this.genMode
   }
 
   start(gen: Generator<AlgoStep>) {
     this.cancel()
     this.logs.value = []
     this.matrix.value = null
+    this.bookmarks.value = []
     this.gen = gen
+    this.genMode = true
+    this.executedSteps = []
+    this.replayAnchor = null
     this.status = 'running'
     this.proceed()
   }
@@ -41,6 +59,10 @@ export class AlgorithmRunner {
     this.cancel()
     this.logs.value = []
     this.matrix.value = null
+    this.bookmarks.value = []
+    this.genMode = false
+    this.executedSteps = []
+    this.replayAnchor = null
     this.status = 'running'
     const api: UserVisualAPI = {
       step: () =>
@@ -74,6 +96,7 @@ export class AlgorithmRunner {
       this.finish()
       return
     }
+    this.executedSteps.push(r.value)
     this.applyStep(r.value)
     if (r.value.pause) {
       if (this.auto.value) {
@@ -145,7 +168,7 @@ export class AlgorithmRunner {
 
   private scheduleResume() {
     if (this.auto.value) {
-      this.timer = window.setTimeout(() => this.doResume(), this.speed.value)
+      this.timer = globalThis.setTimeout(() => this.doResume(), this.speed.value)
     } else {
       this.status = 'paused'
     }
@@ -153,12 +176,73 @@ export class AlgorithmRunner {
 
   private doResume() {
     this.status = 'running'
+    if (this.replayAnchor != null) {
+      this.catchUp()
+      this.status = 'paused'
+      return
+    }
     if (this.pendingResolve) {
       const r = this.pendingResolve
       this.pendingResolve = null
       r()
     } else if (this.gen) {
       this.proceed()
+    }
+  }
+
+  private catchUp() {
+    if (this.replayAnchor == null || !this.gen) return
+    const n = this.executedSteps.length
+    if (this.replayAnchor < n) {
+      this.silentlyReplay(this.executedSteps.slice(this.replayAnchor, n))
+    }
+    this.replayAnchor = null
+  }
+
+  private silentlyReplay(steps: AlgoStep[]) {
+    for (const s of steps) {
+      for (const ev of s.events) this.applyEvent(ev)
+    }
+  }
+
+  private resetOverlayState() {
+    this.logs.value = []
+    this.matrix.value = null
+    this.doneMessage.value = ''
+    resetAlgoOverlay()
+  }
+
+  listBookmarks() {
+    return this.bookmarks.value
+  }
+
+  addBookmark() {
+    if (!this.genMode) return null
+    const bm: AlgoBookmark = {
+      id: Date.now(),
+      name: t('bookmark.prefix') + ' ' + (this.bookmarks.value.length + 1),
+      stepIndex: this.executedSteps.length,
+    }
+    this.bookmarks.value.push(bm)
+    return bm
+  }
+
+  removeBookmark(id: number) {
+    const i = this.bookmarks.value.findIndex((b) => b.id === id)
+    if (i >= 0) this.bookmarks.value.splice(i, 1)
+  }
+
+  jumpToBookmark(id: number) {
+    const bm = this.bookmarks.value.find((b) => b.id === id)
+    if (!bm) return
+    const n = Math.min(bm.stepIndex, this.executedSteps.length)
+    this.resetOverlayState()
+    this.silentlyReplay(this.executedSteps.slice(0, n))
+    if (this.gen) {
+      this.auto.value = false
+      clearTimeout(this.timer)
+      this.status = 'paused'
+      this.replayAnchor = n
     }
   }
 
@@ -173,7 +257,8 @@ export class AlgorithmRunner {
     if (this.status === 'paused') {
       this.doResume()
     } else if (this.status === 'running') {
-      this.timer = window.setTimeout(() => this.doResume(), this.speed.value)
+      this.catchUp()
+      this.timer = globalThis.setTimeout(() => this.doResume(), this.speed.value)
     }
   }
 
@@ -204,3 +289,7 @@ export class AlgorithmRunner {
 }
 
 export const algoRunner = new AlgorithmRunner()
+
+export function createRunner() {
+  return new AlgorithmRunner()
+}
