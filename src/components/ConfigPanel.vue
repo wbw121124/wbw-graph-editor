@@ -37,25 +37,37 @@
       <input v-model.number="style.gridSpacing" type="range" min="20" max="120" step="5" />
       <span class="val">{{ style.gridSpacing }}</span>
     </div>
-    <div class="cfg-row">
-      <span class="label">节点填充</span>
-      <input v-model="style.nodeFill" type="color" />
-      <button class="reset" @click="style.nodeFill = ''">默认</button>
+    <div class="color-block">
+      <div class="cfg-row">
+        <span class="label">节点填充</span>
+        <input v-model="style.nodeFill" type="color" />
+        <button class="reset" @click="style.nodeFill = ''">默认</button>
+      </div>
+      <ColorSwatches v-model="style.nodeFill" />
     </div>
-    <div class="cfg-row">
-      <span class="label">节点描边</span>
-      <input v-model="style.nodeStroke" type="color" />
-      <button class="reset" @click="style.nodeStroke = ''">默认</button>
+    <div class="color-block">
+      <div class="cfg-row">
+        <span class="label">节点描边</span>
+        <input v-model="style.nodeStroke" type="color" />
+        <button class="reset" @click="style.nodeStroke = ''">默认</button>
+      </div>
+      <ColorSwatches v-model="style.nodeStroke" />
     </div>
-    <div class="cfg-row">
-      <span class="label">标签颜色</span>
-      <input v-model="style.labelColor" type="color" />
-      <button class="reset" @click="style.labelColor = ''">默认</button>
+    <div class="color-block">
+      <div class="cfg-row">
+        <span class="label">标签颜色</span>
+        <input v-model="style.labelColor" type="color" />
+        <button class="reset" @click="style.labelColor = ''">默认</button>
+      </div>
+      <ColorSwatches v-model="style.labelColor" />
     </div>
-    <div class="cfg-row">
-      <span class="label">边颜色</span>
-      <input v-model="style.edgeColor" type="color" />
-      <button class="reset" @click="style.edgeColor = ''">默认</button>
+    <div class="color-block">
+      <div class="cfg-row">
+        <span class="label">边颜色</span>
+        <input v-model="style.edgeColor" type="color" />
+        <button class="reset" @click="style.edgeColor = ''">默认</button>
+      </div>
+      <ColorSwatches v-model="style.edgeColor" />
     </div>
     <label class="check"><input v-model="style.showGrid" type="checkbox" /> 显示网格</label>
     <label class="check"><input v-model="style.exportTransparentBg" type="checkbox" /> 导出背景透明</label>
@@ -67,12 +79,20 @@ import { computed } from 'vue'
 import { graphStyle } from '../store/theme'
 import { graphStore } from '../store/graphStore'
 import { REPULSION_AUTO_OFF_THRESHOLD } from '../core/forceLayout'
+import ColorSwatches from './ColorSwatches.vue'
 
 const style = graphStyle
 const repOff = computed(() => graphStore.graph.nodes.length > REPULSION_AUTO_OFF_THRESHOLD)
 </script>
 
 <style scoped>
+.color-block {
+  margin-bottom: 8px;
+}
+
+.color-block .cfg-row {
+  margin-bottom: 4px;
+}
 .cfg-row {
   display: flex;
   align-items: center;
