@@ -157,9 +157,9 @@ export function selfLoopGeometry(a: { x: number; y: number }, r: number, index: 
   // P、P' 同时位于节点圆与自环弧圆上: 所有自环的弧圆半径满足 R² = (R到弦中点距离)² + (r√2/2)²;
   // 第一条(index 0)是 3/4 圆弧: 半径 R = r, 圆心 = (a.x + r, a.y - r), 圆心角 270°,
   //   在 P' 处沿半径水平向右、P 处沿半径竖直向下(均垂直于节点圆于锚点);
-  // 其他自环半径 R = r·(1+index) 更大、圆心角 θ = 2π - 2·arcsin(r√2/(2R)) 更大, 沿弦 P'P 的中垂线外移绕开;
+  // 其他自环半径 R = r·(1+index/2) 更大、圆心角 θ = 2π - 2·arcsin(r√2/(2R)) 更大, 沿弦 P'P 的中垂线外移绕开;
   // 任意两条自环只在 P'、P 两处相交(两弧圆均经过 P'、P)
-  const R = r * (1 + index)
+  const R = r * (1 + index / 2)
   const h = Math.sqrt(R * R - (r * r) / 2) / Math.SQRT2
   const cx = a.x + r / 2 + h
   const cy = a.y - r / 2 - h
