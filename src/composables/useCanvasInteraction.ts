@@ -149,9 +149,6 @@ export function useCanvasInteraction(
             hover.tempEdgeFromId = hitNode
             hover.tempEdgeTarget = screenToWorld(view, mx, my)
           }
-        } else {
-          const w = screenToWorld(view, mx, my)
-          graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
         }
       } else if (mode === 'edit') {
         if (hitNode) emit('edit-node', hitNode)
@@ -182,14 +179,17 @@ export function useCanvasInteraction(
 
   function onDblClick(e: MouseEvent) {
     const { mx, my } = localPos(e)
+    if (uiState.mode === 'draw') {
+      // draw 模式:双击永远加节点,不弹编辑框
+      const w = screenToWorld(view, mx, my)
+      graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
+      return
+    }
     const hit = hitTest(mx, my)
     if (hit.nodeId) {
       emit('edit-node', hit.nodeId)
     } else if (hit.edgeId) {
       emit('edit-edge', hit.edgeId)
-    } else if (uiState.mode === 'draw') {
-      const w = screenToWorld(view, mx, my)
-      graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
     }
   }
 

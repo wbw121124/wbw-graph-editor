@@ -28,7 +28,7 @@ export const messages: Record<Locale, Messages> = {
 
     'mode.title': '模式',
     'mode.hint.force': '节点受力自动布局。单击节点固定/解除固定，拖拽后节点被固定。',
-    'mode.hint.draw': '单击空白处添加节点，依次单击两个节点添加边，拖拽移动节点。',
+    'mode.hint.draw': '双击添加节点，依次单击两个节点添加边，拖拽移动节点。',
     'mode.hint.edit': '单击节点修改标签，单击边修改权重 / 容量 / 费用。',
     'mode.hint.delete': '单击节点删除节点及其所有边，单击边删除边。',
     'mode.hint.drag': '拖拽节点移动位置（不会自动固定），拖拽空白处平移画布。',
@@ -322,7 +322,7 @@ export const messages: Record<Locale, Messages> = {
 
     'mode.title': 'Mode',
     'mode.hint.force': 'Nodes auto-layout by forces. Click a node to fix/unfix it; dragged nodes become fixed.',
-    'mode.hint.draw': 'Click empty space to add a node, click two nodes in order to add an edge, drag to move nodes.',
+    'mode.hint.draw': 'Double-click to add a node, click two nodes in order to add an edge, drag to move nodes.',
     'mode.hint.edit': 'Click a node to edit its label, click an edge to edit weight / capacity / cost.',
     'mode.hint.delete': 'Click a node to delete it with all its edges, click an edge to delete it.',
     'mode.hint.drag': 'Drag nodes to move them (not auto-fixed), drag empty space to pan the canvas.',
