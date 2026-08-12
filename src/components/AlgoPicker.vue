@@ -1,14 +1,13 @@
 <template>
-  <div class="section">
-    <div class="panel-head">
-      <h3>{{ t('algo.builtin') }}</h3>
-      <button class="ghost-btn" @click="uiState.compareMode = true">{{ t('algo.compare') }}</button>
+  <div class="picker">
+    <div class="p-head">
+      <span class="p-title">{{ title }}</span>
+      <button class="primary run-btn" @click="run">{{ t('algo.run') }}</button>
     </div>
-    <div v-for="cat in ALGO_CATEGORIES" :key="cat" class="algo-group">
-      <div class="cat-label">{{ t(cat) }}</div>
+    <div class="algo-group">
       <div class="algo-grid">
         <button
-          v-for="a in byCategory(cat)"
+          v-for="a in ALGORITHMS"
           :key="a.id"
           :class="['algo-btn', { active: selected?.id === a.id }]"
           @click="select(a)"
@@ -17,7 +16,6 @@
         </button>
       </div>
     </div>
-
     <template v-if="selected">
       <div class="params">
         <label v-if="selected.params.includes('source')" class="param">
@@ -35,7 +33,6 @@
           </select>
         </label>
         <p v-if="selected.hintKey" class="hint">{{ t(selected.hintKey) }}</p>
-        <button class="primary run-btn" @click="run">{{ t('algo.run') }}</button>
       </div>
     </template>
   </div>
@@ -43,40 +40,28 @@
 
 <script setup lang="ts">
 import { graphStore } from '../store/graphStore'
-import { algoRunner } from '../algorithms/runner'
-import { ALGO_CATEGORIES } from '../algorithms/registry'
-import { useAlgoRun } from '../composables/useAlgoRun'
-import { uiState } from '../store/ui'
+import { ALGORITHMS } from '../algorithms/registry'
+import type { UseAlgoRun } from '../composables/useAlgoRun'
 import { t } from '../i18n'
 
-const { selectedId, sourceId, targetId, selected, byCategory, select, run } = useAlgoRun(algoRunner)
+const props = defineProps<{ title: string; use: UseAlgoRun }>()
+
+const { selected, sourceId, targetId, select, run } = props.use
 </script>
 
 <style scoped>
-.panel-head {
+.p-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.p-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-}
-
-.panel-head h3 {
-  margin: 0;
-}
-
-.ghost-btn {
-  font-size: 11px;
-  padding: 2px 8px;
-}
-
-.algo-group {
-  margin-bottom: 8px;
-}
-
-.cat-label {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .algo-grid {
@@ -86,8 +71,8 @@ const { selectedId, sourceId, targetId, selected, byCategory, select, run } = us
 }
 
 .algo-btn {
-  padding: 5px 6px;
-  font-size: 12px;
+  padding: 4px 6px;
+  font-size: 11.5px;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -100,9 +85,7 @@ const { selectedId, sourceId, targetId, selected, byCategory, select, run } = us
 }
 
 .params {
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
 }
 
 .param {
@@ -111,7 +94,7 @@ const { selectedId, sourceId, targetId, selected, byCategory, select, run } = us
   gap: 8px;
   font-size: 12px;
   color: var(--text-dim);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .param select {
@@ -122,7 +105,7 @@ const { selectedId, sourceId, targetId, selected, byCategory, select, run } = us
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 6px;
-  padding: 5px;
+  padding: 4px;
   outline: none;
 }
 
@@ -130,10 +113,11 @@ const { selectedId, sourceId, targetId, selected, byCategory, select, run } = us
   font-size: 11px;
   color: var(--text-dim);
   line-height: 1.6;
-  margin: 6px 0;
+  margin: 4px 0;
 }
 
 .run-btn {
-  width: 100%;
+  padding: 3px 12px;
+  font-size: 11.5px;
 }
 </style>

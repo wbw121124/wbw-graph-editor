@@ -2,25 +2,25 @@
 	<div class="section control-bar">
 		<div class="btn-row">
 			<button @click="playPause">
-				{{ algoRunner.auto.value ? t('ctrl.pause') : t('ctrl.play') }}
+				{{ runner.auto.value ? t('ctrl.pause') : t('ctrl.play') }}
 			</button>
-			<button @click="algoRunner.step()">{{ t('ctrl.step') }}</button>
-			<button @click="algoRunner.cancel()">{{ t('ctrl.reset') }}</button>
+			<button @click="runner.step()">{{ t('ctrl.step') }}</button>
+			<button @click="runner.cancel()">{{ t('ctrl.reset') }}</button>
 		</div>
 		<div class="btn-row">
-			<button :disabled="!algoRunner.canBookmark" @click="addBookmark">{{ t('ctrl.bookmarkAdd') }}</button>
+			<button :disabled="!runner.canBookmark" @click="addBookmark">{{ t('ctrl.bookmarkAdd') }}</button>
 		</div>
-		<div v-if="algoRunner.bookmarks.value.length > 0" class="bookmark-row">
+		<div v-if="runner.bookmarks.value.length > 0" class="bookmark-row">
 			<span class="dim">{{ t('ctrl.bookmarks') }}</span>
 			<span
-				v-for="bm in algoRunner.bookmarks.value"
+				v-for="bm in runner.bookmarks.value"
 				:key="bm.id"
 				class="bookmark-chip"
 				:title="t('ctrl.bookmarkJump')"
-				@click="algoRunner.jumpToBookmark(bm.id)"
+				@click="runner.jumpToBookmark(bm.id)"
 			>
 				{{ bm.name }}
-				<span class="chip-x" @click.stop="algoRunner.removeBookmark(bm.id)">×</span>
+				<span class="chip-x" @click.stop="runner.removeBookmark(bm.id)">×</span>
 			</span>
 		</div>
 		<div class="speed-row">
@@ -30,32 +30,36 @@
 				min="40"
 				max="2000"
 				step="10"
-				:value="algoRunner.speed.value"
+				:value="runner.speed.value"
 				@input="onSpeed"
 			/>
-			<span class="val">{{ algoRunner.speed.value }}ms</span>
+			<span class="val">{{ runner.speed.value }}ms</span>
 		</div>
-		<div v-if="algoRunner.status === 'done'" class="done-msg">
-			{{ algoRunner.doneMessage || t('ctrl.done') }}
+		<div v-if="runner.status === 'done'" class="done-msg">
+			{{ runner.doneMessage || t('ctrl.done') }}
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { algoRunner } from "../algorithms/runner";
+import { computed } from "vue";
+import { algoRunner, type AlgorithmRunner } from "../algorithms/runner";
 import { t } from "../i18n";
 
+const props = defineProps<{ runner?: AlgorithmRunner }>();
+const runner = computed(() => props.runner ?? algoRunner);
+
 function playPause() {
-	if (algoRunner.auto.value) algoRunner.pause();
-	else algoRunner.play();
+	if (runner.value.auto.value) runner.value.pause();
+	else runner.value.play();
 }
 
 function onSpeed(e: Event) {
-	algoRunner.speed.value = Number((e.target as HTMLInputElement).value);
+	runner.value.speed.value = Number((e.target as HTMLInputElement).value);
 }
 
 function addBookmark() {
-	algoRunner.addBookmark();
+	runner.value.addBookmark();
 }
 </script>
 

@@ -105,6 +105,10 @@ export const messages: Record<Locale, Messages> = {
     'algo.none': '未选择',
     'algo.run': '运行',
     'algo.noNodes': '图中没有节点',
+    'algo.compare': '对比模式',
+    'algo.compareExit': '退出对比',
+    'algo.cmpA': '算法 A',
+    'algo.cmpB': '算法 B',
 
     'ctrl.pause': '暂停',
     'ctrl.play': '播放',
@@ -430,6 +434,10 @@ export const messages: Record<Locale, Messages> = {
     'algo.none': 'Not selected',
     'algo.run': 'Run',
     'algo.noNodes': 'No nodes in graph',
+    'algo.compare': 'Compare',
+    'algo.compareExit': 'Exit compare',
+    'algo.cmpA': 'Algo A',
+    'algo.cmpB': 'Algo B',
 
     'ctrl.pause': 'Pause',
     'ctrl.play': 'Play',

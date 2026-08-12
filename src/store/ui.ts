@@ -16,6 +16,7 @@ export interface CtxMenuState {
 export const uiState = reactive({
   mode: 'draw' as EditorMode,
   sideTab: 'algo' as SideTab,
+  compareMode: false,
   editingNodeId: null as string | null,
   editingEdgeId: null as string | null,
   showMarkup: false,

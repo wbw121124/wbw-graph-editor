@@ -35,9 +35,12 @@
           <button :class="{ active: uiState.sideTab === 'edit' }" @click="uiState.sideTab = 'edit'">{{ t('app.tabEdit') }}</button>
         </div>
         <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'algo' }">
-          <AlgoPanel />
-          <AlgoControlBar />
-          <AlgoLog />
+          <ComparePanel v-if="uiState.compareMode" />
+          <template v-else>
+            <AlgoPanel />
+            <AlgoControlBar />
+            <AlgoLog />
+          </template>
         </div>
         <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'custom' }">
           <AlgorithmEditor />
@@ -73,6 +76,7 @@ import MarkupDialog from './components/MarkupDialog.vue'
 import AlgoPanel from './components/AlgoPanel.vue'
 import AlgoControlBar from './components/AlgoControlBar.vue'
 import AlgoLog from './components/AlgoLog.vue'
+import ComparePanel from './components/ComparePanel.vue'
 import AlgorithmEditor from './components/AlgorithmEditor.vue'
 import MatrixDialog from './components/MatrixDialog.vue'
 import ContextMenu from './components/ContextMenu.vue'

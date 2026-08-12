@@ -1,22 +1,26 @@
 <template>
-  <div v-if="algoRunner.logs.value.length > 0" class="section log-panel">
+  <div v-if="runner.logs.value.length > 0" class="section log-panel">
     <h3>{{ t('log.title') }}</h3>
     <div class="log-list">
-      <div v-for="(l, i) in algoRunner.logs.value" :key="i" class="log-line">{{ l }}</div>
+      <div v-for="(l, i) in runner.logs.value" :key="i" class="log-line">{{ l }}</div>
     </div>
     <div class="log-actions">
-      <button class="clear-btn" @click="algoRunner.logs.value = []">{{ t('log.clear') }}</button>
+      <button class="clear-btn" @click="runner.logs.value = []">{{ t('log.clear') }}</button>
       <button class="clear-btn" @click="exportLogs">{{ t('log.export') }}</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { algoRunner } from '../algorithms/runner'
+import { computed } from 'vue'
+import { algoRunner, type AlgorithmRunner } from '../algorithms/runner'
 import { t } from '../i18n'
 
+const props = defineProps<{ runner?: AlgorithmRunner }>()
+const runner = computed(() => props.runner ?? algoRunner)
+
 function exportLogs() {
-  const lines = algoRunner.logs.value
+  const lines = runner.value.logs.value
   const head = `${t('log.title')} - ${new Date().toLocaleString()}`
   const text = [head, '='.repeat(40), ...lines].join('\n')
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
