@@ -18,6 +18,26 @@
     </div>
     <p v-if="repOff" class="rep-off">节点数 > 300，排斥力已自动关闭</p>
     <div class="cfg-row">
+      <span class="label">边线宽度</span>
+      <input v-model.number="style.edgeWidth" type="range" min="1" max="6" step="0.2" />
+      <span class="val">{{ style.edgeWidth.toFixed(1) }}</span>
+    </div>
+    <div class="cfg-row">
+      <span class="label">标签字号</span>
+      <input v-model.number="style.nodeFontSize" type="range" min="10" max="24" />
+      <span class="val">{{ style.nodeFontSize }}</span>
+    </div>
+    <div class="cfg-row">
+      <span class="label">箭头大小</span>
+      <input v-model.number="style.arrowSize" type="range" min="4" max="14" />
+      <span class="val">{{ style.arrowSize }}</span>
+    </div>
+    <div class="cfg-row">
+      <span class="label">网格间距</span>
+      <input v-model.number="style.gridSpacing" type="range" min="20" max="120" step="5" />
+      <span class="val">{{ style.gridSpacing }}</span>
+    </div>
+    <div class="cfg-row">
       <span class="label">节点填充</span>
       <input v-model="style.nodeFill" type="color" />
       <button class="reset" @click="style.nodeFill = ''">默认</button>
