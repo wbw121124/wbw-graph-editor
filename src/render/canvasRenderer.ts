@@ -1,6 +1,7 @@
 import { WORLD_SIZE, type GraphData, type GraphEdge, type GraphNode, type GraphStyle } from '../types/graph'
 import { ALGO_COLORS, canvasTheme, graphStyle } from '../store/theme'
 import type { AlgoOverlayState } from './overlay'
+import { computeEdgeRoute, quadHitsNode, quadPoint, routeMid } from '../core/edgeRouting'
 
 export interface ViewTransform {
   scale: number
@@ -136,13 +137,7 @@ export function edgeControlPoint(a: { x: number; y: number }, b: { x: number; y:
   return { x: mx - uy * bend, y: my + ux * bend }
 }
 
-export function quadPoint(a: { x: number; y: number }, c: { x: number; y: number }, b: { x: number; y: number }, t: number) {
-  const s = 1 - t
-  return {
-    x: s * s * a.x + 2 * s * t * c.x + t * t * b.x,
-    y: s * s * a.y + 2 * s * t * c.y + t * t * b.y,
-  }
-}
+export { quadPoint } from '../core/edgeRouting'
 
 export function cubicPoint(a: { x: number; y: number }, c1: { x: number; y: number }, c2: { x: number; y: number }, b: { x: number; y: number }, t: number) {
   const s = 1 - t
@@ -180,6 +175,24 @@ function arrowHead(ctx: CanvasRenderingContext2D, from: { x: number; y: number }
   ctx.fill()
 }
 
+/** 绕行控制点平滑追帧: 目标值跳变(如挡点穿过线段导致换侧)时渲染值平滑过渡 */
+const routeAnim = new Map<string, { cx: number; cy: number }>()
+const ROUTE_SMOOTH = 0.08
+
+function smoothedRoute(id: string, target: { x: number; y: number }) {
+  const cur = routeAnim.get(id)
+  if (!cur) {
+    routeAnim.set(id, { cx: target.x, cy: target.y })
+    return { ...target }
+  }
+  cur.cx += (target.x - cur.cx) * ROUTE_SMOOTH
+  cur.cy += (target.y - cur.cy) * ROUTE_SMOOTH
+  if (Math.hypot(target.x - cur.cx, target.y - cur.cy) < 0.01) {
+    return { ...target }
+  }
+  return { x: cur.cx, y: cur.cy }
+}
+
 function drawEdge(
   ctx: CanvasRenderingContext2D,
   e: GraphEdge,
@@ -189,6 +202,7 @@ function drawEdge(
   overlay: AlgoOverlayState,
   hover: UiHoverState,
   pinfo: { index: number; total: number },
+  nodes: GraphNode[],
 ): { x: number; y: number; text: string } | null {
   const theme = canvasTheme.value
   const r = nodeRadius()
@@ -234,8 +248,33 @@ function drawEdge(
   let labelY = (sy + ey) / 2
 
   const bend = bendOf(pinfo.index, pinfo.total) * (e.from <= e.to ? 1 : -1)
+  const blockers = nodes.filter((n) => n.id !== e.from && n.id !== e.to)
+  // 形状决策: null=直线, {c}=二次贝塞尔(路由/平行弯曲共用)
+  let shape: { c: { x: number; y: number } } | null = null
   if (bend !== 0) {
     const c = edgeControlPoint(a, b, bend)
+    if (quadHitsNode(sx, sy, c.x, c.y, ex, ey, blockers, r)) {
+      // 平行弯曲曲线穿过挡点 -> 改用绕行路由
+      const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+      if (route.length > 0) {
+        const base = smoothedRoute(e.id, route[0])
+        shape = { c: { x: base.x - uy * bend, y: base.y + ux * bend } }
+      }
+    } else {
+      routeAnim.delete(e.id)
+      shape = { c }
+    }
+  } else {
+    const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+    if (route.length > 0) {
+      shape = { c: smoothedRoute(e.id, route[0]) }
+    } else {
+      routeAnim.delete(e.id)
+    }
+  }
+
+  if (shape) {
+    const c = shape.c
     ctx.beginPath()
     ctx.moveTo(sx, sy)
     ctx.quadraticCurveTo(c.x, c.y, ex, ey)
@@ -246,7 +285,7 @@ function drawEdge(
       const tl = Math.hypot(tdx, tdy) || 1
       arrowHead(ctx, { x: ex - (tdx / tl) * r, y: ey - (tdy / tl) * r }, { x: ex, y: ey }, arrow)
     }
-    const mid = quadPoint({ x: sx, y: sy }, c, { x: ex, y: ey }, 0.5)
+    const mid = routeMid(sx, sy, c, ex, ey)
     labelX = mid.x
     labelY = mid.y
   } else {
@@ -254,7 +293,6 @@ function drawEdge(
     ctx.moveTo(sx, sy)
     ctx.lineTo(ex, ey)
     ctx.stroke()
-
     if (directed) {
       arrowHead(ctx, { x: ex - ux * r, y: ey - uy * r }, { x: ex, y: ey }, arrow)
     }
@@ -399,7 +437,7 @@ export function drawScene(
     const b = byId.get(e.to)
     if (!a || !b) continue
     const pinfo = parallel.get(e.id) ?? { index: 0, total: 1 }
-    const lbl = drawEdge(ctx, e, a, b, graph.directed, overlay, hover, pinfo)
+    const lbl = drawEdge(ctx, e, a, b, graph.directed, overlay, hover, pinfo, graph.nodes)
     if (lbl) labels.push(lbl)
   }
   for (const l of labels) {

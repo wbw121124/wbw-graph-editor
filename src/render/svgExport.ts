@@ -2,6 +2,7 @@ import { WORLD_SIZE, type GraphData, type GraphEdge, type GraphNode } from '../t
 import { ALGO_COLORS, canvasTheme, graphStyle } from '../store/theme'
 import type { AlgoOverlayState } from './overlay'
 import { bendOf, buildParallelInfo, edgeControlPoint, selfLoopGeometry } from './canvasRenderer'
+import { computeEdgeRoute, quadHitsNode, routeMid } from '../core/edgeRouting'
 
 const FONT_FAMILY = 'Segoe UI, PingFang SC, Microsoft YaHei, sans-serif'
 
@@ -42,6 +43,7 @@ function edgeMarkup(
   directed: boolean,
   overlay: AlgoOverlayState,
   pinfo: { index: number; total: number },
+  nodes: GraphNode[],
 ): { markup: string; label: { x: number; y: number; text: string } | null } {
   const theme = canvasTheme.value
   const r = nodeRadius()
@@ -86,8 +88,25 @@ function edgeMarkup(
   let labelY = (sy + ey) / 2
 
   const bend = bendOf(pinfo.index, pinfo.total) * (e.from <= e.to ? 1 : -1)
+  const blockers = nodes.filter((n) => n.id !== e.from && n.id !== e.to)
+  // 形状决策: null=直线, {c}=二次贝塞尔(路由/平行弯曲共用)
+  let shape: { c: { x: number; y: number } } | null = null
   if (bend !== 0) {
     const c = edgeControlPoint(a, b, bend)
+    if (quadHitsNode(sx, sy, c.x, c.y, ex, ey, blockers, r)) {
+      // 平行弯曲曲线穿过挡点 -> 改用绕行路由(控制点叠加平行偏移保持重边分离)
+      const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+      if (route.length > 0) shape = { c: { x: route[0].x - uy * bend, y: route[0].y + ux * bend } }
+    } else {
+      shape = { c }
+    }
+  } else {
+    const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+    if (route.length > 0) shape = { c: route[0] }
+  }
+
+  if (shape) {
+    const c = shape.c
     parts.push(
       `<path d="M ${num(sx)} ${num(sy)} Q ${num(c.x)} ${num(c.y)} ${num(ex)} ${num(ey)}" fill="none" stroke="${esc(color)}" stroke-width="${width}"/>`,
     )
@@ -99,8 +118,9 @@ function edgeMarkup(
         `<polygon points="${arrowPoints(ex - (tdx / tl) * r, ey - (tdy / tl) * r, ex, ey, arrow)}" fill="${esc(color)}"/>`,
       )
     }
-    labelX = (sx + ex) / 2 - (uy * bend) / 2
-    labelY = (sy + ey) / 2 + (ux * bend) / 2
+    const mid = routeMid(sx, sy, c, ex, ey)
+    labelX = mid.x
+    labelY = mid.y
   } else {
     parts.push(`<line x1="${num(sx)}" y1="${num(sy)}" x2="${num(ex)}" y2="${num(ey)}" stroke="${esc(color)}" stroke-width="${width}"/>`)
     if (directed) {
@@ -193,7 +213,7 @@ export function buildSvg(graph: GraphData, overlay: AlgoOverlayState, opts: SvgE
     const b = byId.get(e.to)
     if (!a || !b) continue
     const pinfo = parallel.get(e.id) ?? { index: 0, total: 1 }
-    const res = edgeMarkup(e, a, b, graph.directed, overlay, pinfo)
+    const res = edgeMarkup(e, a, b, graph.directed, overlay, pinfo, graph.nodes)
     parts.push(res.markup)
     if (res.label) labels.push(res.label)
   }

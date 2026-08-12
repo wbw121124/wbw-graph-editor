@@ -8,12 +8,12 @@ import {
   buildParallelInfo,
   clamp,
   edgeControlPoint,
-  quadPoint,
   screenToWorld,
   selfLoopGeometry,
   type UiHoverState,
   type ViewTransform,
 } from '../render/canvasRenderer'
+import { computeEdgeRoute, quadHitsNode } from '../core/edgeRouting'
 
 export type CanvasInteractionEvent = 'edit-node' | 'edit-edge'
 
@@ -82,18 +82,45 @@ export function useCanvasInteraction(
         continue
       }
       const bend = bendOf(index, total) * (e.from <= e.to ? 1 : -1)
-      const c = edgeControlPoint(a, b, bend)
+      const r = graphStyle.nodeRadius
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      const len = Math.hypot(dx, dy) || 1
+      const ux = dx / len
+      const uy = dy / len
+      const sx = a.x + ux * r
+      const sy = a.y + uy * r
+      const ex = b.x - ux * r
+      const ey = b.y - uy * r
+      const blockers = nodes.filter((n) => n.id !== e.from && n.id !== e.to)
       let d = Infinity
-      let prev = { x: a.x, y: a.y }
-      for (let s = 1; s <= 8; s++) {
-        const cur = quadPoint(a, c, b, s / 8)
-        d = Math.min(d, distToSegment(p.x, p.y, prev.x, prev.y, cur.x, cur.y))
-        prev = cur
+      if (bend !== 0) {
+        const c = edgeControlPoint(a, b, bend)
+        if (quadHitsNode(sx, sy, c.x, c.y, ex, ey, blockers, r)) {
+          // 平行弯曲曲线穿过挡点 -> 命中检测跟随绕行路由(控制点叠加平行偏移)
+          const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+          if (route.length > 0) {
+            const rc = { x: route[0].x - uy * bend, y: route[0].y + ux * bend }
+            d = quadDist(p.x, p.y, sx, sy, rc.x, rc.y, ex, ey)
+          } else {
+            d = distToSegment(p.x, p.y, sx, sy, ex, ey)
+          }
+        } else {
+          d = quadDist(p.x, p.y, sx, sy, c.x, c.y, ex, ey)
+        }
+      } else {
+        const route = computeEdgeRoute(sx, sy, ex, ey, r, blockers, e.id)
+        if (route.length > 0) {
+          d = quadDist(p.x, p.y, sx, sy, route[0].x, route[0].y, ex, ey)
+        } else {
+          d = distToSegment(p.x, p.y, sx, sy, ex, ey)
+        }
       }
       if (d < bestDist && d < 10 / view.scale + 2) {
         bestDist = d
         bestEdge = e.id
       }
+      continue
     }
     return { nodeId: null, edgeId: bestEdge }
   }
@@ -265,6 +292,23 @@ export function useCanvasInteraction(
     let t = ((px - ax) * dx + (py - ay) * dy) / len2
     t = clamp(t, 0, 1)
     return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+  }
+
+  // 点到二次贝塞尔曲线(8段折线采样)的距离
+  function quadDist(px: number, py: number, sx: number, sy: number, cx: number, cy: number, ex: number, ey: number) {
+    let d = Infinity
+    let prev = { x: sx, y: sy }
+    for (let s = 1; s <= 8; s++) {
+      const t = s / 8
+      const k = 1 - t
+      const cur = {
+        x: k * k * sx + 2 * k * t * cx + t * t * ex,
+        y: k * k * sy + 2 * k * t * cy + t * t * ey,
+      }
+      d = Math.min(d, distToSegment(px, py, prev.x, prev.y, cur.x, cur.y))
+      prev = cur
+    }
+    return d
   }
 
   return { onMouseDown, onMouseMove, onMouseUp, onDblClick, onMouseLeave, onWheel, hitTest }

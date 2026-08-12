@@ -3,14 +3,24 @@
 ## 项目目标
 wbw-graph-editor：基于 Vue3 + Canvas 的图论算法教学工具 —— 支持 6 种模式编辑（Select/Draw/Edit/Delete/Drag/Force），文本定义图（节点/边/权值/容量/费用/注释），力导向布局，最短路径/最大流/最小费用流算法动画，PNG/SVG 导出，友好的提示框与快捷键操作。
 
-## 当前任务（已完成 ✔ 提交 3b9ce0c）
-CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL PASS），修复实测发现的 2 个 bug。
+## 当前任务
+继续todo列表的剩下任务（批3c~批4，任务列表：批1: C9 URL 分享 + C10 剪贴板PNG + C11 GitHub链接 + A3 快捷键弹窗 + B8 环形/网格布局 + 右键菜单
+批2: A2 算法书签+日志导出 (runner 工厂/快照/静默重放)
+批2b: A4 算法对比模式 (复用书签基建)
+批3a: B5 自环支持 (创建/编辑/双锚点出入几何+命中)
+批3b: 边视觉绕点路由 (渲染+temp边+命中+SVG导出)
+批3c: B6 框选批量操作 (rect选择/批量移动删除固定)
+批4: B7 样式撤销 (统一历史 [graph,style])
+验证: vue-tsc+build+CDP 探针/回归+Node单测 (自环解析/路由/布局)
+plan.md 记录 + 分批提交推送）
 
 ### 已完成改动
 | 文件                             | 改动                                                                                                                                                  |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/components/GraphCanvas.vue` | tooltip 首次显示时 ref 未绑定导致定位停在 (0,0)——`updateTip()` 末尾追加 `nextTick(() => placeTip(lastMouseX, lastMouseY))`                            |
 | `src/components/LeftPanel.vue`   | deep watcher 同步 textarea 时未更新 `lastLoaded`，图变化（如有向/无向切换）会把 500ms 防抖窗口内未载入的编辑回退——watcher 同步时同时更新 `lastLoaded` |
+
+剩下请看 git 历史
 
 ### 验证结果（无头 Edge + CDP 实测，全部通过）
 - [x] `npx vue-tsc --noEmit` 通过；`npm run build` 通过
@@ -22,14 +32,11 @@ CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL 
 - [x] ConfigPanel 7 滑块（含 4 新增）、边宽可调至 3；色板单组 8 色块
 - [x] 顶栏中/EN 切换（Undo/撤销）+ localStorage `wbw-lang` 持久化
 - [x] 实测方法论沉淀：工具提示锚点探测（anchorNear 16px 网格 + 位置校验）、两点视图标定（worldToScreen）、载入后力导向重新平衡导致节点快速移动 → 先固定全部节点再定位
+- [ ] 
+剩下请看 git 历史
 
 ## 下一步（待用户确认优先级）
-按收益排序的候选优化/新需求：
-1. **算法动画/速度控制增强**（如动画速率滑块、逐步执行、暂停/继续）
-2. **保存/加载**：本地 localStorage 自动保存或 .txt 文件导入导出
-3. **视觉增强**：深色主题
-4. **算法面板补全**：更多图论算法、结果可视化
-5. **性能优化**：大数据量图的渲染/布局优化
+请自行思考
 
 ## 具体任务备忘
 - 保持 `git -c user.name="wbw" -c user.email="wbw@local" commit` 提交约定；完成需求后 push 到 `origin`（https://github.com/wbw121124/wbw-graph-editor）
@@ -51,6 +58,7 @@ CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL 
 - draw 模式双击加点（不再双击弹编辑框），单击空白不再加点（模式提示同步更新）
 - draw 快速连击被浏览器合并为单次 dblclick（第 3/4 次只发 click detail 递增），改为点击链计数（500ms/8px 链、偶数次=双击加点），dblclick 兜底 80ms 去重；4 连击实测 [2,0]，两对双击 [4,0]（2+1+1 正确），cdp-test13 21 项全过（a4a6847）
 - 力导向：repulsionK>0 时弹簧力误用 d²/k（恒吸引、无胡克恢复，理想长度近乎无感），改为恒用 (d-k)*2；`Math.min(mag,50)` 步长上限提为可调 `maxMoveStep`（ConfigPanel 滑块 5-200）；Node 单测验证（k=300 收敛≈309，旧≈151；cap 5/200 快慢区分；repK=0 收敛 120 无回归）（35214d9）
+- 剩下请看 git 历史
 
 ## 写给大语言模型
 请你使用中文思考进行思考，每次修改后请记得 `git commit`
