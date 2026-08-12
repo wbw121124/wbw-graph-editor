@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { algoOverlay, resetAlgoOverlay } from '../render/overlay'
+import { t } from '../i18n'
 import type { AlgoEvent, AlgoStep, MatrixData } from './types'
 
 export type AlgoStatus = 'idle' | 'running' | 'paused' | 'done'
@@ -59,8 +60,8 @@ export class AlgorithmRunner {
         await run(api)
         if (this.status !== 'done' && !this.pendingResolve) this.finish()
       } catch (err) {
-        this.applyEvent({ type: 'log', message: `错误: ${String(err)}` })
-        this.finish('执行出错')
+        this.applyEvent({ type: 'log', message: t('run.error', { msg: String(err) }) })
+        this.finish(t('run.executeError'))
       }
     }
     void exec()
@@ -195,7 +196,7 @@ export class AlgorithmRunner {
   private finish(message?: string) {
     clearTimeout(this.timer)
     if (message !== undefined) this.doneMessage.value = message
-    else this.doneMessage.value = '已完成'
+    else this.doneMessage.value = t('run.finished')
     this.gen = null
     this.pendingResolve = null
     this.status = 'done'
