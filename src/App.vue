@@ -7,6 +7,7 @@
       <button :disabled="!graphStore.canUndo" @click="graphStore.undo()">{{ t('app.undo') }}</button>
       <button :disabled="!graphStore.canRedo" @click="graphStore.redo()">{{ t('app.redo') }}</button>
       <button class="ghost" @click="toggleTheme">{{ themeName === 'dark' ? t('app.toLight') : t('app.toDark') }}</button>
+      <button class="ghost" @click="toggleLang">{{ locale === 'zh' ? t('app.langEn') : t('app.langZh') }}</button>
     </header>
 
     <main class="main">
@@ -52,7 +53,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { t } from './i18n'
+import { t, setLocale, locale } from './i18n'
 import LeftPanel from './components/LeftPanel.vue'
 import GraphCanvas from './components/GraphCanvas.vue'
 import ModeToolbar from './components/ModeToolbar.vue'
@@ -70,6 +71,10 @@ import { themeName, toggleTheme } from './store/theme'
 import { uiState } from './store/ui'
 
 const canvasRef = ref<InstanceType<typeof GraphCanvas> | null>(null)
+
+function toggleLang() {
+  setLocale(locale.value === 'zh' ? 'en' : 'zh')
+}
 </script>
 
 <style scoped>
