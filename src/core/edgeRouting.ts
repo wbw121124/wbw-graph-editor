@@ -80,19 +80,26 @@ export function computeEdgeRoute(
   id?: string,
 ): RoutePoint[] {
   const minD = r + PAD
-  let best: { t: number; d: number; p: { x: number; y: number }; node: { x: number; y: number } } | null = null
-  for (const n of blockers) {
+  let best: { 
+    t: number; 
+    d: number; 
+    p: { x: number; y: number }; 
+    node: { x: number; y: number };
+    index: number; // 新增：记录挡点在数组中的索引
+  } | null = null
+  
+  for (let i = 0; i < blockers.length; i++) {
+    const n = blockers[i];
     const info = segInfo(n.x, n.y, sx, sy, ex, ey)
-    // 仅线段内部的挡点触发绕行: 端点附近(t≈0/1)是曲线/绕行点所在,不视为穿过
     if (info.d < minD && info.t > 0.02 && info.t < 0.98) {
       if (best === null) {
-        best = { t: info.t, d: info.d, p: info.p, node: n }
+        best = { t: info.t, d: info.d, p: info.p, node: n, index: i }
       } else if (Math.abs(info.t - best.t) > 0.05 ? info.t < best.t : info.d < best.d) {
-        // t 相差较大选更靠前的挡点; t 相近选穿透最深(d 最小)的, 避免多挡点并存时选择抖动
-        best = { t: info.t, d: info.d, p: info.p, node: n }
+        best = { t: info.t, d: info.d, p: info.p, node: n, index: i }
       }
     }
   }
+  
   if (!best) {
     if (id !== undefined) {
       sideCache.delete(id)
@@ -100,19 +107,21 @@ export function computeEdgeRoute(
     }
     return []
   }
-  // best 滞回: 上次最佳挡点仍挡且 t 相近(±0.05)时沿用, 消除挡点间切换导致的曲线跳动
+  
+  // 使用索引作为滞回 key
   if (id !== undefined) {
-    const prevId = bestCache.get(id)
-    if (prevId !== undefined && prevId !== best.node.id) {
-      const prevNode = blockers.find((n) => n.id === prevId)
-      if (prevNode) {
+    const prevKey = bestCache.get(id)
+    if (prevKey !== undefined) {
+      const prevIndex = parseInt(prevKey)
+      if (!isNaN(prevIndex) && prevIndex < blockers.length && prevIndex !== best.index) {
+        const prevNode = blockers[prevIndex]
         const info = segInfo(prevNode.x, prevNode.y, sx, sy, ex, ey)
         if (info.d < minD && info.t > 0.02 && info.t < 0.98 && Math.abs(info.t - best.t) <= 0.05) {
-          best = { t: info.t, d: info.d, p: info.p, node: prevNode }
+          best = { t: info.t, d: info.d, p: info.p, node: prevNode, index: prevIndex }
         }
       }
     }
-    bestCache.set(id, best.node.id)
+    bestCache.set(id, String(best.index))
   }
 
   const dx = ex - sx
