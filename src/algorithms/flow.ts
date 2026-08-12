@@ -1,5 +1,6 @@
 import type { GraphEdge } from '../types/graph'
 import { ALGO_COLORS } from '../store/theme'
+import { t as tI18n } from '../i18n'
 import type { AlgoContext, AlgoStep } from './types'
 import type { AlgoEvent } from './types'
 import { labelOf } from './util'
@@ -112,10 +113,10 @@ export function* dinic(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`Dinic 最大流，源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}（边无容量时按 1 计算）`)
+  yield log(tI18n('run.dinicStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj, arcs } = buildNet(ctx)
   let maxflow = 0
   while (true) {
@@ -132,7 +133,7 @@ export function* dinic(ctx: AlgoContext): Generator<AlgoStep> {
       }
     }
     if (!level.has(t)) break
-    yield evs([{ type: 'log', message: `BFS 分层完成，汇点深度 ${level.get(t)}` }, ...flowEvents(adj, g.edges)], true)
+    yield evs([{ type: 'log', message: tI18n('run.bfsLevel', { d: level.get(t)! }) }, ...flowEvents(adj, g.edges)], true)
     const it = new Map<string, number>()
     const dfs = (u: string, f: number): number => {
       if (u === t) return f
@@ -154,10 +155,10 @@ export function* dinic(ctx: AlgoContext): Generator<AlgoStep> {
       const pushed = dfs(s, Infinity)
       if (pushed === 0) break
       maxflow += pushed
-      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `阻塞流增广 ${pushed}，当前最大流 ${maxflow}` }], true)
+      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.blockAug', { p: pushed, f: maxflow }) }], true)
     }
   }
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 = ${maxflow}` }, { type: 'done', message: `Dinic 完成，最大流 ${maxflow}` }])
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.maxflow', { v: maxflow }) }, { type: 'done', message: tI18n('run.dinicDone', { v: maxflow }) }])
 }
 
 export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
@@ -165,10 +166,10 @@ export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`ISAP 最大流（距离标号 + gap 优化），源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}`)
+  yield log(tI18n('run.isapStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj } = buildNet(ctx)
   const n = g.nodes.length
   const d = new Map<string, number>()
@@ -189,14 +190,14 @@ export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
   }
   bfs()
   if (d.get(s) === n) {
-    yield evs([{ type: 'log', message: '源点无法到达汇点，最大流 = 0' }, { type: 'done', message: '最大流 0' }])
+    yield evs([{ type: 'log', message: tI18n('run.noSTFlow') }, { type: 'done', message: tI18n('run.zeroFlow') }])
     return
   }
   for (const node of g.nodes) {
     const dv = d.get(node.id)!
     gap.set(dv, (gap.get(dv) ?? 0) + 1)
   }
-  yield evs([{ type: 'log', message: '距离标号初始化完成' }], true)
+  yield evs([{ type: 'log', message: tI18n('run.isapInit') }], true)
   const it = new Map<string, number>()
   let maxflow = 0
   const aug = (u: string, f: number): number => {
@@ -219,7 +220,7 @@ export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
     const pushed = aug(s, Infinity)
     if (pushed > 0) {
       maxflow += pushed
-      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `增广 ${pushed}，当前最大流 ${maxflow}` }], true)
+      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.augFlow', { p: pushed, f: maxflow }) }], true)
       continue
     }
     let mind = n - 1
@@ -231,9 +232,9 @@ export function* isap(ctx: AlgoContext): Generator<AlgoStep> {
     d.set(s, newD)
     gap.set(newD, (gap.get(newD) ?? 0) + 1)
     it.set(s, 0)
-    yield evs([{ type: 'log', message: `重标号：d[${labelOf(g, s)}] = ${newD}` }], true)
+    yield evs([{ type: 'log', message: tI18n('run.relabel1', { a: labelOf(g, s), d: newD }) }], true)
   }
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 = ${maxflow}` }, { type: 'done', message: `ISAP 完成，最大流 ${maxflow}` }])
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.maxflow', { v: maxflow }) }, { type: 'done', message: tI18n('run.isapDone', { v: maxflow }) }])
 }
 
 export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
@@ -241,10 +242,10 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`MPM 最大流（潜势瓶颈），源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}`)
+  yield log(tI18n('run.mpmStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj } = buildNet(ctx)
   let maxflow = 0
   const level = () => {
@@ -265,7 +266,7 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
   while (true) {
     const lv = level()
     if (!lv.has(t)) break
-    yield evs([{ type: 'log', message: `构建允许弧网络，汇点深度 ${lv.get(t)}` }, ...flowEvents(adj, g.edges)], true)
+    yield evs([{ type: 'log', message: tI18n('run.allowNet', { d: lv.get(t)! }) }, ...flowEvents(adj, g.edges)], true)
     const allowed = (u: string, a: Arc) => a.cap > 0 && lv.get(a.v) === lv.get(u)! + 1
     const potIn = new Map<string, number>()
     const potOut = new Map<string, number>()
@@ -292,7 +293,7 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
       }
     }
     if (v === null || bottleneck <= 0) break
-    yield evs([{ type: 'log', message: `瓶颈节点 ${labelOf(g, v)}，潜势 ${bottleneck}` }], true)
+    yield evs([{ type: 'log', message: tI18n('run.bottleneck', { a: labelOf(g, v), p: bottleneck }) }], true)
     const pushToT = (u: string, f: number, seen: Set<string>): number => {
       if (u === t) return f
       if (seen.has(u)) return 0
@@ -334,10 +335,10 @@ export function* mpm(ctx: AlgoContext): Generator<AlgoStep> {
       if (inP <= 0) break
       remain -= inP
       maxflow += inP
-      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `通过 ${labelOf(g, v)} 增广 ${inP}，当前最大流 ${maxflow}` }], true)
+      yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.viaAugment', { a: labelOf(g, v), p: inP, f: maxflow }) }], true)
     }
   }
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 = ${maxflow}` }, { type: 'done', message: `MPM 完成，最大流 ${maxflow}` }])
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.maxflow', { v: maxflow }) }, { type: 'done', message: tI18n('run.mpmDone', { v: maxflow }) }])
 }
 
 export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
@@ -345,10 +346,10 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`HLPP 预流推进，源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}`)
+  yield log(tI18n('run.hlppStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj } = buildNet(ctx)
   const n = g.nodes.length
   const d = new Map<string, number>()
@@ -372,7 +373,7 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
   }
   bfs()
   if (d.get(s) === n) {
-    yield evs([{ type: 'log', message: '源点无法到达汇点，最大流 = 0' }, { type: 'done', message: '最大流 0' }])
+    yield evs([{ type: 'log', message: tI18n('run.noSTFlow') }, { type: 'done', message: tI18n('run.zeroFlow') }])
     return
   }
   for (const a of adj.get(s)!) {
@@ -386,7 +387,7 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
   for (const node of g.nodes) {
     if (node.id !== s && node.id !== t && excess.get(node.id)! > 0) overflow.push(node.id)
   }
-  yield evs([...flowEvents(adj, g.edges), ...overflow.map((id) => ({ type: 'setNodeValue' as const, node: id, text: `+${excess.get(id)}` })), { type: 'log', message: '源点推满预流' }], true)
+  yield evs([...flowEvents(adj, g.edges), ...overflow.map((id) => ({ type: 'setNodeValue' as const, node: id, text: `+${excess.get(id)}` })), { type: 'log', message: tI18n('run.saturate') }], true)
   const push = (u: string, a: Arc, f: number) => {
     a.cap -= f
     a.rev.cap += f
@@ -431,13 +432,13 @@ export function* hlpp(ctx: AlgoContext): Generator<AlgoStep> {
     if (!pushed || excess.get(u)! > 0) {
       const oldD = uLevel
       const newD = relabel()
-      yield evs([{ type: 'log', message: `重标号 d[${labelOf(g, u)}]: ${oldD} → ${newD}` }], true)
+      yield evs([{ type: 'log', message: tI18n('run.relabel2', { a: labelOf(g, u), o: oldD, n: newD }) }], true)
       overflow.sort((a, b) => d.get(b)! - d.get(a)!)
       if (d.get(u)! >= n) overflow.shift()
     }
   }
   const maxflow = excess.get(t)!
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 = ${maxflow}` }, { type: 'done', message: `HLPP 完成，最大流 ${maxflow}` }])
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.maxflow', { v: maxflow }) }, { type: 'done', message: tI18n('run.hlppDone', { v: maxflow }) }])
 }
 
 export function* sspMinCostFlow(ctx: AlgoContext): Generator<AlgoStep> {
@@ -445,10 +446,10 @@ export function* sspMinCostFlow(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`费用流（SSP 逐次最短路），源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}（费用取边 cost，缺省 0）`)
+  yield log(tI18n('run.sspStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj } = buildNet(ctx)
   let maxflow = 0
   let totalCost = 0
@@ -495,12 +496,12 @@ export function* sspMinCostFlow(ctx: AlgoContext): Generator<AlgoStep> {
       [
         ...flowEvents(adj, g.edges),
         ...path.filter((a) => a.orig).map((a) => ({ type: 'setEdgeColor' as const, edge: a.orig!, color: ALGO_COLORS.path })),
-        { type: 'log', message: `增广 ${f}，单位费用 ${dist.get(t)}，当前总费用 ${totalCost}` },
+        { type: 'log', message: tI18n('run.sspAugment', { f, c: dist.get(t)!, t: totalCost }) },
       ],
       true,
     )
   }
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 ${maxflow}，最小费用 ${totalCost}` }, { type: 'done', message: `费用流完成：流 ${maxflow}，费用 ${totalCost}` }])
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.sspTotal', { f: maxflow, c: totalCost }) }, { type: 'done', message: tI18n('run.sspDone', { f: maxflow, c: totalCost }) }])
 }
 
 export function* boundedFlow(ctx: AlgoContext): Generator<AlgoStep> {
@@ -511,12 +512,12 @@ export function* boundedFlow(ctx: AlgoContext): Generator<AlgoStep> {
   const upper = (e: GraphEdge) => e.capacity ?? Infinity
   const hasBounds = g.edges.some((e) => e.capacity !== null)
   if (!hasBounds) {
-    yield log('上下界流需要边设置容量（上界）与权重（下界），当前边无容量，使用 weight 作为下界、capacity 作为上界，全部为 0/∞ 无意义')
+    yield log(tI18n('run.boundedNeed'))
     return
   }
   const bounded = s !== null && t !== null
-  if (bounded) yield log(`有源汇上下界可行流，源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}`)
-  else yield log('无源汇上下界可行流（循环流）')
+  if (bounded) yield log(tI18n('run.boundedST', { a: labelOf(g, s), b: labelOf(g, t) }))
+  else yield log(tI18n('run.boundedCycle'))
   const { adj, arcs } = buildNet(ctx)
   const SS = '$SS'
   const ST = '$ST'
@@ -547,22 +548,22 @@ export function* boundedFlow(ctx: AlgoContext): Generator<AlgoStep> {
     }
   }
   if (bounded) add(t, s, Infinity, 0, null)
-  yield evs([{ type: 'log', message: `构建超级源汇辅助网络，Σ下界 = ${totalLower}` }], true)
+  yield evs([{ type: 'log', message: tI18n('run.superNet', { v: totalLower }) }], true)
   const flow = sstFlow(adj, SS, ST)
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `超级源汇最大流 ${flow} / 需要 ${totalLower}` }], true)
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.needLower', { f: flow, l: totalLower }) }], true)
   if (flow < totalLower) {
-    yield evs([{ type: 'log', message: '无法满足所有边下界，不存在可行流' }, { type: 'done', message: '无可行流' }])
+    yield evs([{ type: 'log', message: tI18n('run.noFeasible') }, { type: 'done', message: tI18n('run.feasibleNone') }])
     return
   }
-  yield evs([{ type: 'log', message: '可行流存在，计算剩余容量上界内的增广' }], true)
+  yield evs([{ type: 'log', message: tI18n('run.feasibleOk') }], true)
   let extra = 0
   if (bounded) {
     extra = sstFlow(adj, s, t)
   }
   yield evs([
     ...flowEvents(adj, g.edges),
-    { type: 'log', message: bounded ? `最大流 = ${totalLower + extra}` : `循环可行流 = ${totalLower}` },
-    { type: 'done', message: '上下界流计算完成' },
+    { type: 'log', message: bounded ? tI18n('run.flowOrCycle', { v: totalLower + extra }) : tI18n('run.cycleFlow', { v: totalLower }) },
+    { type: 'done', message: tI18n('run.boundedDone') },
   ])
 }
 
@@ -571,10 +572,10 @@ export function* minCut(ctx: AlgoContext): Generator<AlgoStep> {
   const s = ctx.sourceId
   const t = ctx.targetId
   if (!s || !t) {
-    yield log('请选择源点与汇点')
+    yield log(tI18n('run.needST'))
     return
   }
-  yield log(`最小割（基于 Dinic 最大流），源 ${labelOf(g, s)} → 汇 ${labelOf(g, t)}`)
+  yield log(tI18n('run.mincutStart', { a: labelOf(g, s), b: labelOf(g, t) }))
   const { adj } = buildNet(ctx)
   const maxflow = sstFlow(adj, s, t)
   const side = new Set<string>()
@@ -589,7 +590,7 @@ export function* minCut(ctx: AlgoContext): Generator<AlgoStep> {
       }
     }
   }
-  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: `最大流 = ${maxflow}，割集 S = { ${[...side].map((id) => labelOf(g, id)).join(', ')} }` }], true)
+  yield evs([...flowEvents(adj, g.edges), { type: 'log', message: tI18n('run.cutSet', { v: maxflow, list: [...side].map((id) => labelOf(g, id)).join(', ') }) }], true)
   const cutEdges: string[] = []
   for (const e of g.edges) {
     const inS = side.has(e.from)
@@ -601,8 +602,8 @@ export function* minCut(ctx: AlgoContext): Generator<AlgoStep> {
   yield evs(
     [
       ...cutEdges.map((id) => ({ type: 'setEdgeColor' as const, edge: id, color: ALGO_COLORS.bad })),
-      { type: 'log', message: `割边共 ${cutEdges.length} 条，割容量 = ${maxflow}` },
-      { type: 'done', message: `最小割完成，容量 ${maxflow}` },
+      { type: 'log', message: tI18n('run.cutEdges', { n: cutEdges.length, v: maxflow }) },
+      { type: 'done', message: tI18n('run.mincutDone', { v: maxflow }) },
     ],
     true,
   )
