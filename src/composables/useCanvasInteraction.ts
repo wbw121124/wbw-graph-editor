@@ -34,6 +34,12 @@ export function useCanvasInteraction(
   let panOriginY = 0
 
   const THRESHOLD = 4
+  // 双击检测:浏览器对快速连击只会派发一个 dblclick(其余 click 的 detail 递增),需要自己按点击链计数
+  let lastClickT = 0
+  let lastClickX = 0
+  let lastClickY = 0
+  let clickChain = 0
+  let lastAddT = -1000
 
   function localPos(e: MouseEvent) {
     const rect = canvasRef.value!.getBoundingClientRect()
@@ -135,8 +141,26 @@ export function useCanvasInteraction(
     } else if (action === 'none') {
       const { mx, my } = localPos(e)
       const mode = uiState.mode
+      // 点击链计数:相邻点击(500ms/8px 内)组成一条链,每 2 次点击构成用户的一次双击
+      const now = Date.now()
+      if (now - lastClickT <= 500 && Math.hypot(mx - lastClickX, my - lastClickY) <= 8) {
+        clickChain++
+      } else {
+        clickChain = 1
+      }
+      lastClickT = now
+      lastClickX = mx
+      lastClickY = my
       if (mode === 'draw') {
-        if (hitNode) {
+        if (clickChain % 2 === 0) {
+          // 点击链偶数次:本次是双击 -> 加节点,并清掉残留的连边待选状态
+          hover.selectedNodeId = null
+          hover.tempEdgeFromId = null
+          hover.tempEdgeTarget = null
+          const w = screenToWorld(view, mx, my)
+          graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
+          lastAddT = now
+        } else if (hitNode) {
           if (hover.selectedNodeId === hitNode) {
             hover.selectedNodeId = null
             hover.tempEdgeFromId = null
@@ -180,12 +204,16 @@ export function useCanvasInteraction(
   function onDblClick(e: MouseEvent) {
     const { mx, my } = localPos(e)
     if (uiState.mode === 'draw') {
-      // draw 模式:双击永远加节点,不弹编辑框;并清掉残留的连边待选状态,连续双击互不干扰
+      // draw 模式:双击永远加节点,不弹编辑框
+      // 常规路径是 mouseup 的点击链检测(点击链偶数次)已加点;这里兜底(如事件流缺 mouseup)并去重
       hover.selectedNodeId = null
       hover.tempEdgeFromId = null
       hover.tempEdgeTarget = null
-      const w = screenToWorld(view, mx, my)
-      graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
+      if (Date.now() - lastAddT > 80) {
+        const w = screenToWorld(view, mx, my)
+        graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
+        lastAddT = Date.now()
+      }
       return
     }
     const hit = hitTest(mx, my)
