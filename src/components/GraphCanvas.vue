@@ -192,12 +192,33 @@ const MODE_KEYS: Record<string, EditorMode> = {
 function onKeydown(e: KeyboardEvent) {
   const t = e.target as HTMLElement | null
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault()
+    if (e.shiftKey) graphStore.redo()
+    else graphStore.undo()
+    return
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+    e.preventDefault()
+    graphStore.redo()
+    return
+  }
   if (e.key === 'Escape') {
     hover.selectedNodeId = null
     hover.selectedEdgeId = null
     hover.tempEdgeFromId = null
     hover.tempEdgeTarget = null
     return
+  }
+  if (e.key === 'Enter' && uiState.mode === 'select') {
+    if (hover.selectedNodeId) {
+      emit('edit-node', hover.selectedNodeId)
+      return
+    }
+    if (hover.selectedEdgeId) {
+      emit('edit-edge', hover.selectedEdgeId)
+      return
+    }
   }
   if ((e.key === 'Delete' || e.key === 'Backspace') && uiState.mode === 'select') {
     e.preventDefault()
@@ -212,6 +233,16 @@ function onKeydown(e: KeyboardEvent) {
   }
   const mode = MODE_KEYS[e.key.toLowerCase()]
   if (mode) {
+    if (mode === 'edit' && uiState.mode === 'select') {
+      if (hover.selectedNodeId) {
+        emit('edit-node', hover.selectedNodeId)
+        return
+      }
+      if (hover.selectedEdgeId) {
+        emit('edit-edge', hover.selectedEdgeId)
+        return
+      }
+    }
     e.preventDefault()
     uiState.mode = mode
   }
