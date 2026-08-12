@@ -1,5 +1,6 @@
 import type { GraphData } from '../types/graph'
 import { ALGO_COLORS } from '../store/theme'
+import { t } from '../i18n'
 import type { AlgoContext, AlgoStep } from './types'
 import type { AlgoEvent } from './types'
 import { labelOf, neighbors } from './util'
@@ -37,10 +38,10 @@ function bipartiteColoring(g: GraphData): { ok: boolean; color: Map<string, numb
 
 export function* hungarianMatching(ctx: AlgoContext): Generator<AlgoStep> {
   const g = ctx.graph
-  yield log('二分图最大匹配（匈牙利算法）')
+  yield log(t('run.hungarianStart'))
   const { ok, color } = bipartiteColoring(g)
   if (!ok) {
-    yield evs([{ type: 'log', message: '该图不是二分图，无法用匈牙利算法求匹配' }, { type: 'done', message: '非二分图' }])
+    yield evs([{ type: 'log', message: t('run.notBipartite') }, { type: 'done', message: t('run.notBipartiteShort') }])
     return
   }
   const left = g.nodes.filter((n) => color.get(n.id) === 0)
@@ -51,11 +52,11 @@ export function* hungarianMatching(ctx: AlgoContext): Generator<AlgoStep> {
     for (const { v, edge } of neighbors(g, u)) {
       if (color.get(v) !== 1 || vis.has(v)) continue
       vis.add(v)
-      yield evs([{ type: 'setEdgeColor', edge: edge.id, color: ALGO_COLORS.info }, { type: 'log', message: `尝试匹配 ${labelOf(g, u)} → ${labelOf(g, v)}` }], true)
+      yield evs([{ type: 'setEdgeColor', edge: edge.id, color: ALGO_COLORS.info }, { type: 'log', message: t('run.tryMatch', { a: labelOf(g, u), b: labelOf(g, v) }) }], true)
       const m = matchR.get(v)
       if (m === null || m === undefined || (yield* tryMatch(m, vis))) {
         matchR.set(v, u)
-        yield evs([{ type: 'setEdgeColor', edge: edge.id, color: ALGO_COLORS.tree }, { type: 'log', message: `匹配 ${labelOf(g, u)} — ${labelOf(g, v)}` }], true)
+        yield evs([{ type: 'setEdgeColor', edge: edge.id, color: ALGO_COLORS.tree }, { type: 'log', message: t('run.matchEdge', { a: labelOf(g, u), b: labelOf(g, v) }) }], true)
         return true
       }
     }
@@ -67,15 +68,15 @@ export function* hungarianMatching(ctx: AlgoContext): Generator<AlgoStep> {
       total++
     }
   }
-  yield evs([{ type: 'log', message: `最大匹配数 = ${total}` }, { type: 'done', message: `匈牙利完成，最大匹配 ${total}` }])
+  yield evs([{ type: 'log', message: t('run.maxMatch', { n: total }) }, { type: 'done', message: t('run.hungarianDone', { n: total }) }])
 }
 
 export function* minVertexCover(ctx: AlgoContext): Generator<AlgoStep> {
   const g = ctx.graph
-  yield log('最小点覆盖（König 定理，基于最大匹配）')
+  yield log(t('run.vertexCoverStart'))
   const { ok, color } = bipartiteColoring(g)
   if (!ok) {
-    yield evs([{ type: 'log', message: '该图不是二分图，无法构造最小点覆盖' }, { type: 'done', message: '非二分图' }])
+    yield evs([{ type: 'log', message: t('run.notBipartiteCover') }, { type: 'done', message: t('run.notBipartiteShort') }])
     return
   }
   const matchR = new Map<string, string | null>()
@@ -104,7 +105,7 @@ export function* minVertexCover(ctx: AlgoContext): Generator<AlgoStep> {
   for (const e of g.edges) {
     if (matchR.get(e.to) === e.from || matchL.get(e.from) === e.to) matchedEdges.push(e.id)
   }
-  yield evs([...matchedEdges.map((id) => ({ type: 'setEdgeColor' as const, edge: id, color: ALGO_COLORS.tree })), { type: 'log', message: '最大匹配计算完成，开始 König 构造点覆盖' }], true)
+  yield evs([...matchedEdges.map((id) => ({ type: 'setEdgeColor' as const, edge: id, color: ALGO_COLORS.tree })), { type: 'log', message: t('run.koenigStart') }], true)
   const visL = new Set<string>()
   const visR = new Set<string>()
   const q: string[] = []
@@ -133,8 +134,8 @@ export function* minVertexCover(ctx: AlgoContext): Generator<AlgoStep> {
   yield evs(
     [
       ...cover.map((id) => ({ type: 'setNodeColor' as const, node: id, color: ALGO_COLORS.bad })),
-      { type: 'log', message: `最小点覆盖：{ ${cover.map((id) => labelOf(g, id)).join(', ')} }，大小 = 最大匹配数 = ${matchedEdges.length}` },
-      { type: 'done', message: `最小点覆盖完成，大小 ${matchedEdges.length}` },
+      { type: 'log', message: t('run.coverSet', { n: matchedEdges.length, list: cover.map((id) => labelOf(g, id)).join(', ') }) },
+      { type: 'done', message: t('run.vertexCoverDone', { n: matchedEdges.length }) },
     ],
     true,
   )
