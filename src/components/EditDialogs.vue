@@ -7,6 +7,14 @@
         <span>注释</span>
         <input v-model="nodeCommentInput" class="input" placeholder="可选" @keydown.enter="save" />
       </div>
+      <div class="field">
+        <span>X</span>
+        <input v-model.number="nodeXInput" type="number" class="input" @keydown.enter="save" />
+      </div>
+      <div class="field">
+        <span>Y</span>
+        <input v-model.number="nodeYInput" type="number" class="input" @keydown.enter="save" />
+      </div>
       <div class="dialog-actions">
         <button @click="close">取消</button>
         <button class="primary" @click="save">保存</button>
@@ -49,9 +57,12 @@
 import { computed, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { uiState } from '../store/ui'
+import { WORLD_SIZE } from '../types/graph'
 
 const labelInput = ref('')
 const nodeCommentInput = ref('')
+const nodeXInput = ref(0)
+const nodeYInput = ref(0)
 const weightInput = ref('')
 const capacityInput = ref('')
 const costInput = ref('')
@@ -66,6 +77,8 @@ watch(node, (n) => {
   if (n) {
     labelInput.value = n.label
     nodeCommentInput.value = n.comment ?? ''
+    nodeXInput.value = Math.round(n.x)
+    nodeYInput.value = Math.round(n.y)
   }
 })
 
@@ -89,6 +102,12 @@ function save() {
   if (node.value) {
     graphStore.setNodeLabel(node.value.id, labelInput.value.trim() || node.value.label)
     graphStore.setNodeComment(node.value.id, nodeCommentInput.value)
+    const nx = Number(nodeXInput.value)
+    const ny = Number(nodeYInput.value)
+    if (!isNaN(nx) && !isNaN(ny) && (nx !== node.value.x || ny !== node.value.y)) {
+      graphStore.beginDrag()
+      graphStore.moveNode(node.value.id, Math.max(0, Math.min(WORLD_SIZE, nx)), Math.max(0, Math.min(WORLD_SIZE, ny)))
+    }
   }
   close()
 }
