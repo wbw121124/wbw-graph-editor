@@ -180,6 +180,19 @@ export function useCanvasInteraction(
     hover.draggingNodeId = null
   }
 
+  function onDblClick(e: MouseEvent) {
+    const { mx, my } = localPos(e)
+    const hit = hitTest(mx, my)
+    if (hit.nodeId) {
+      emit('edit-node', hit.nodeId)
+    } else if (hit.edgeId) {
+      emit('edit-edge', hit.edgeId)
+    } else if (uiState.mode === 'draw') {
+      const w = screenToWorld(view, mx, my)
+      graphStore.addNodeAt(clamp(w.x, 0, WORLD_SIZE), clamp(w.y, 0, WORLD_SIZE))
+    }
+  }
+
   function onMouseLeave() {
     mouseDown = false
     hover.hoverNodeId = null
@@ -206,5 +219,5 @@ export function useCanvasInteraction(
     return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
   }
 
-  return { onMouseDown, onMouseMove, onMouseUp, onMouseLeave, onWheel }
+  return { onMouseDown, onMouseMove, onMouseUp, onDblClick, onMouseLeave, onWheel }
 }

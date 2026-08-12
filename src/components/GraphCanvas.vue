@@ -6,6 +6,7 @@
       @mousedown="handlers.onMouseDown"
       @mousemove="onCanvasMove"
       @mouseup="handlers.onMouseUp"
+      @dblclick="handlers.onDblClick"
       @mouseleave="onCanvasLeave"
       @wheel="handlers.onWheel"
     ></canvas>
