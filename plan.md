@@ -3,38 +3,33 @@
 ## 项目目标
 wbw-graph-editor：基于 Vue3 + Canvas 的图论算法教学工具 —— 支持 6 种模式编辑（Select/Draw/Edit/Delete/Drag/Force），文本定义图（节点/边/权值/容量/费用/注释），力导向布局，最短路径/最大流/最小费用流算法动画，PNG/SVG 导出，友好的提示框与快捷键操作。
 
-## 当前任务（已完成 ✔ 提交 850e633）
-一次性需求：ESC 取消连边、Select 模式 + Delete 删除、全模式键盘快捷键、导出背景透明。
+## 当前任务（已完成 ✔ 提交 3b9ce0c）
+CDP 全量实测回归（cdp-test13.cjs，21 项断言全过，连续两轮 ALL PASS），修复实测发现的 2 个 bug。
 
 ### 已完成改动
 | 文件 | 改动 |
 |---|---|
-| `src/types/graph.ts` | `EditorMode` 加 `'select'`；`GraphStyle` 加 `exportTransparentBg` |
-| `src/store/theme.ts` | `graphStyle` 初始化 `exportTransparentBg: false` |
-| `src/render/canvasRenderer.ts` | `UiHoverState` 加 `selectedEdgeId`；`drawEdge` 选中高亮（`theme.selected` + 线宽 2.6）；`drawScene` 加 `transparentBg` 参数（透明时跳过背景 fillRect，网格/边标签底色保留） |
-| `src/composables/useCanvasInteraction.ts` | `onMouseUp` 加 select 分支：点节点/边选中（再点取消）、点空白取消；拖拽移动/平移照常 |
-| `src/components/GraphCanvas.vue` | hover 加 `selectedEdgeId`；全局 `keydown`：ESC 清连边/选中，Delete/Backspace 在 select 模式删除选中节点/边，模式快捷键 `V`=select `D`=draw `E`=edit `X`=delete `G`=drag `F`=force；忽略 INPUT/TEXTAREA/SELECT/contenteditable 焦点 |
-| `src/components/ModeToolbar.vue` | 加 Select 按钮 + hint |
-| `src/components/ConfigPanel.vue` | 加"导出背景透明"复选框 |
-| `src/render/svgExport.ts` | `buildSvg(graph, overlay, { transparentBg? })`，透明时跳过背景 rect |
-| `src/components/CommandPanel.vue` | `emptyHover` 补 `selectedEdgeId`；PNG/SVG 导出读取 `graphStyle.exportTransparentBg` |
+| `src/components/GraphCanvas.vue` | tooltip 首次显示时 ref 未绑定导致定位停在 (0,0)——`updateTip()` 末尾追加 `nextTick(() => placeTip(lastMouseX, lastMouseY))` |
+| `src/components/LeftPanel.vue` | deep watcher 同步 textarea 时未更新 `lastLoaded`，图变化（如有向/无向切换）会把 500ms 防抖窗口内未载入的编辑回退——watcher 同步时同时更新 `lastLoaded` |
 
 ### 验证结果（无头 Edge + CDP 实测，全部通过）
 - [x] `npx vue-tsc --noEmit` 通过；`npm run build` 通过
-- [x] 模式快捷键全部生效（V/D/E/F/X/G 切换正确）
-- [x] Delete 无选中时不误删（3 节点 3 边不变）
-- [x] select 模式：单击选中节点 → Delete 删除（节点 3→2，边 3→1）
-- [x] 导出背景透明复选框勾选生效、SVG 下载点击正常
-- [x] **ESC 取消连边**（cdp-test12：固定全部 + 适应视图定位两节点 → draw 模式点 A → ESC → 点 B 无边 3→3；再点 A 无边 3→4，正常连边不受影响）
-- [x] 已推送 origin（计划：保留 plan.md 全量记录）
+- [x] 双击空白建点/双击节点弹窗/坐标编辑保存关闭/X=1000 持久化
+- [x] Ctrl+Z 撤销坐标编辑/Ctrl+Y 重做（数值精确校验）
+- [x] 新增节点 1→2 撤销 2→1 重做 1→2
+- [x] 文本载入有向图 `0\n1\n0 1 5`（2 节点 1 边）
+- [x] 双击边弹窗（权值 5、有向图翻转按钮可用）→ 翻转后文本变 `1 0 5`
+- [x] ConfigPanel 7 滑块（含 4 新增）、边宽可调至 3；色板单组 8 色块
+- [x] 顶栏中/EN 切换（Undo/撤销）+ localStorage `wbw-lang` 持久化
+- [x] 实测方法论沉淀：工具提示锚点探测（anchorNear 16px 网格 + 位置校验）、两点视图标定（worldToScreen）、载入后力导向重新平衡导致节点快速移动 → 先固定全部节点再定位
 
 ## 下一步（待用户确认优先级）
 按收益排序的候选优化/新需求：
 1. **算法动画/速度控制增强**（如动画速率滑块、逐步执行、暂停/继续）
-2. **编辑能力补全**：Edit 模式编辑边权/容量/费用弹出框、节点标签编辑
-3. **保存/加载**：本地 localStorage 自动保存或 .txt 文件导入导出
-4. **视觉增强**：深色主题、节点/边样式自定义面板
-5. **i18n / 多语言**
+2. **保存/加载**：本地 localStorage 自动保存或 .txt 文件导入导出
+3. **视觉增强**：深色主题
+4. **算法面板补全**：更多图论算法、结果可视化
+5. **性能优化**：大数据量图的渲染/布局优化
 
 ## 具体任务备忘
 - 保持 `git -c user.name="wbw" -c user.email="wbw@local" commit` 提交约定；完成需求后 push 到 `origin`（https://github.com/wbw121124/wbw-graph-editor）
@@ -49,3 +44,7 @@ wbw-graph-editor：基于 Vue3 + Canvas 的图论算法教学工具 —— 支�
 - 节点数 > 300 自动关闭排斥力（O(n²) 优化）+ 面板提示
 - PNG 导出 4x 质量修复 + SVG 矢量导出（均不含边界线/遮罩；背景透明开关）
 - ESC 取消连边、Select 模式 + Delete 删除、全模式快捷键、导出背景透明（850e633）
+- 双击编辑弹窗（节点/边）、坐标编辑、边方向翻转、Ctrl+Z/Y 撤销重做快捷键（367b535/71734ed/e595c57/4e490c3）
+- 样式配置：边宽/字号/箭头/网格间距滑块 + 颜色预设色板（3ddcd2f/41ce3d3/763e55e）
+- i18n 双语言：语言基础设施/全组件文案/算法层与日志/匹配与网络流算法日志/顶栏切换按钮（8225664→e50f2f4）
+- tooltip 首显定位 + 文本区 lastLoaded 同步修复（3b9ce0c）
