@@ -1,12 +1,12 @@
 <template>
   <div class="app" :class="`theme-${themeName}`">
     <header class="topbar">
-      <span class="logo">图编辑器 Graph Editor</span>
-      <span class="sub">图论可视化 · 算法演示 · 自定义算法</span>
+      <span class="logo">{{ t('app.logo') }}</span>
+      <span class="sub">{{ t('app.sub') }}</span>
       <div class="spacer"></div>
-      <button :disabled="!graphStore.canUndo" @click="graphStore.undo()">撤销</button>
-      <button :disabled="!graphStore.canRedo" @click="graphStore.redo()">重做</button>
-      <button class="ghost" @click="toggleTheme">{{ themeName === 'dark' ? '浅色' : '深色' }}</button>
+      <button :disabled="!graphStore.canUndo" @click="graphStore.undo()">{{ t('app.undo') }}</button>
+      <button :disabled="!graphStore.canRedo" @click="graphStore.redo()">{{ t('app.redo') }}</button>
+      <button class="ghost" @click="toggleTheme">{{ themeName === 'dark' ? t('app.toLight') : t('app.toDark') }}</button>
     </header>
 
     <main class="main">
@@ -22,9 +22,9 @@
 
       <aside class="side">
         <div class="tabs">
-          <button :class="{ active: uiState.sideTab === 'algo' }" @click="uiState.sideTab = 'algo'">算法</button>
-          <button :class="{ active: uiState.sideTab === 'custom' }" @click="uiState.sideTab = 'custom'">自定义</button>
-          <button :class="{ active: uiState.sideTab === 'edit' }" @click="uiState.sideTab = 'edit'">编辑</button>
+          <button :class="{ active: uiState.sideTab === 'algo' }" @click="uiState.sideTab = 'algo'">{{ t('app.tabAlgo') }}</button>
+          <button :class="{ active: uiState.sideTab === 'custom' }" @click="uiState.sideTab = 'custom'">{{ t('app.tabCustom') }}</button>
+          <button :class="{ active: uiState.sideTab === 'edit' }" @click="uiState.sideTab = 'edit'">{{ t('app.tabEdit') }}</button>
         </div>
         <div class="tab-pane" :class="{ hidden: uiState.sideTab !== 'algo' }">
           <AlgoPanel />
@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { t } from './i18n'
 import LeftPanel from './components/LeftPanel.vue'
 import GraphCanvas from './components/GraphCanvas.vue'
 import ModeToolbar from './components/ModeToolbar.vue'

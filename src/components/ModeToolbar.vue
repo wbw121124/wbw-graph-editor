@@ -1,6 +1,6 @@
 <template>
   <div class="section">
-    <h3>模式</h3>
+    <h3>{{ t('mode.title') }}</h3>
     <div class="modes">
       <button
         v-for="m in modes"
@@ -19,6 +19,7 @@
 import { computed } from 'vue'
 import type { EditorMode } from '../types/graph'
 import { uiState } from '../store/ui'
+import { t } from '../i18n'
 
 const modes: { id: EditorMode; name: string }[] = [
   { id: 'force', name: 'Force' },
@@ -29,16 +30,7 @@ const modes: { id: EditorMode; name: string }[] = [
   { id: 'select', name: 'Select' },
 ]
 
-const hints: Record<EditorMode, string> = {
-  force: '节点受力自动布局。单击节点固定/解除固定，拖拽后节点被固定。',
-  draw: '单击空白处添加节点，依次单击两个节点添加边，拖拽移动节点。',
-  edit: '单击节点修改标签，单击边修改权重 / 容量 / 费用。',
-  delete: '单击节点删除节点及其所有边，单击边删除边。',
-  drag: '拖拽节点移动位置（不会自动固定），拖拽空白处平移画布。',
-  select: '单击节点/边选中（再点取消），点空白取消，Delete 删除选中，拖拽移动节点。',
-}
-
-const hint = computed(() => hints[uiState.mode])
+const hint = computed(() => t(`mode.hint.${uiState.mode}`))
 </script>
 
 <style scoped>

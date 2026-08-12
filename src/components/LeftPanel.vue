@@ -2,15 +2,15 @@
   <aside class="panel left-panel">
     <div class="section">
       <div class="row between">
-        <span class="label">图类型</span>
+        <span class="label">{{ t('lp.graphType') }}</span>
         <div class="seg">
-          <button :class="{ active: !directed }" @click="setDirected(false)">无向</button>
-          <button :class="{ active: directed }" @click="setDirected(true)">有向</button>
+          <button :class="{ active: !directed }" @click="setDirected(false)">{{ t('lp.undirected') }}</button>
+          <button :class="{ active: directed }" @click="setDirected(true)">{{ t('lp.directed') }}</button>
         </div>
       </div>
       <div class="stats">
-        <span>节点数 <b>{{ graph.nodes.length }}</b></span>
-        <span>边数 <b>{{ graph.edges.length }}</b></span>
+        <span>{{ t('lp.nodes') }} <b>{{ graph.nodes.length }}</b></span>
+        <span>{{ t('lp.edges') }} <b>{{ graph.edges.length }}</b></span>
       </div>
     </div>
 
@@ -27,12 +27,12 @@
       ></textarea>
       <div class="row between">
         <div class="btn-group">
-          <button title="编号从 0 开始" @click="renumber(0)">0-based</button>
-          <button title="编号从 1 开始" @click="renumber(1)">1-based</button>
+          <button :title="t('lp.fromZero')" @click="renumber(0)">0-based</button>
+          <button :title="t('lp.fromOne')" @click="renumber(1)">1-based</button>
         </div>
         <div class="btn-group">
-          <button @click="pickFile">导入</button>
-          <button @click="exportFile">导出</button>
+          <button @click="pickFile">{{ t('lp.import') }}</button>
+          <button @click="exportFile">{{ t('lp.export') }}</button>
         </div>
       </div>
       <input ref="fileRef" type="file" accept=".txt,.graph,text/plain" hidden @change="onFile" />
@@ -43,6 +43,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
+import { t } from '../i18n'
 
 const text = ref('')
 const textRef = ref<HTMLTextAreaElement | null>(null)

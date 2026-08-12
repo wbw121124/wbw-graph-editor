@@ -40,6 +40,7 @@ import { useCanvasInteraction } from '../composables/useCanvasInteraction'
 import { layoutTick } from '../core/forceLayout'
 import { WORLD_SIZE, type EditorMode } from '../types/graph'
 import { uiState } from '../store/ui'
+import { t } from '../i18n'
 
 const emit = defineEmits<{
   'edit-node': [id: string]
@@ -132,23 +133,23 @@ function updateTip() {
         if (ee.to === n.id) degIn++
       }
     }
-    lines.push(`节点 ${n.id}`)
-    lines.push(`标签: ${n.label}`)
-    lines.push(g.directed ? `度数: 出 ${degOut} / 入 ${degIn}` : `度数: ${degIn}`)
-    lines.push(`位置: (${Math.round(n.x)}, ${Math.round(n.y)})`)
-    lines.push(`固定: ${n.fixed ? '是' : '否'}`)
+    lines.push(t('tip.node', { id: n.id }))
+    lines.push(t('tip.label', { label: n.label }))
+    lines.push(g.directed ? t('tip.degreeDir', { out: degOut, in: degIn }) : t('tip.degree', { n: degIn }))
+    lines.push(t('tip.pos', { x: Math.round(n.x), y: Math.round(n.y) }))
+    lines.push(n.fixed ? t('tip.fixedYes') : t('tip.fixedNo'))
     const color = algoOverlay.nodeColors.get(n.id) ?? graphStyle.nodeFill
-    if (color) lines.push(`颜色: ${color}`)
-    if (n.comment) lines.push(`注释: ${n.comment}`)
+    if (color) lines.push(t('tip.color', { color }))
+    if (n.comment) lines.push(t('tip.comment', { comment: n.comment }))
   } else if (e) {
-    lines.push(`边 ${e.id}`)
+    lines.push(t('tip.edge', { id: e.id }))
     lines.push(`${graphStore.nodeLabel(e.from)} → ${graphStore.nodeLabel(e.to)}`)
-    if (e.weight !== null) lines.push(`权重: ${e.weight}`)
-    if (e.capacity !== null) lines.push(`容量: ${e.capacity}`)
-    if (e.cost !== null) lines.push(`费用: ${e.cost}`)
+    if (e.weight !== null) lines.push(t('tip.weight', { v: e.weight }))
+    if (e.capacity !== null) lines.push(t('tip.capacity', { v: e.capacity }))
+    if (e.cost !== null) lines.push(t('tip.cost', { v: e.cost }))
     const color = algoOverlay.edgeColors.get(e.id) ?? graphStyle.edgeColor
-    if (color) lines.push(`颜色: ${color}`)
-    if (e.comment) lines.push(`注释: ${e.comment}`)
+    if (color) lines.push(t('tip.color', { color }))
+    if (e.comment) lines.push(t('tip.comment', { comment: e.comment }))
   }
   placeTip(lastMouseX, lastMouseY)
   tipLines.value = lines
