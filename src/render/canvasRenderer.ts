@@ -144,6 +144,29 @@ export function quadPoint(a: { x: number; y: number }, c: { x: number; y: number
   }
 }
 
+export function cubicPoint(a: { x: number; y: number }, c1: { x: number; y: number }, c2: { x: number; y: number }, b: { x: number; y: number }, t: number) {
+  const s = 1 - t
+  return {
+    x: s * s * s * a.x + 3 * s * s * t * c1.x + 3 * s * t * t * c2.x + t * t * t * b.x,
+    y: s * s * s * a.y + 3 * s * s * t * c1.y + 3 * s * t * t * c2.y + t * t * t * b.y,
+  }
+}
+
+export function selfLoopGeometry(a: { x: number; y: number }, r: number, index: number, total: number) {
+  // 同节点的自环共用同一对锚点方向:出口在正左、入口在正右(相差180°)
+  // 控制点沿锚点切线竖直出发(不切穿节点圆),多条自环靠垂向错开
+  const bulge = r * 3 + index * r * 2
+  const sx = a.x - r
+  const sy = a.y
+  const ex = a.x + r
+  const ey = a.y
+  const cx1 = a.x - r
+  const cy1 = a.y - bulge * 0.7
+  const cx2 = a.x + r
+  const cy2 = a.y - bulge * 0.7
+  return { sx, sy, ex, ey, cx1, cy1, cx2, cy2 }
+}
+
 function arrowHead(ctx: CanvasRenderingContext2D, from: { x: number; y: number }, to: { x: number; y: number }, size: number) {
   const angle = Math.atan2(to.y - from.y, to.x - from.x)
   const a1 = angle + Math.PI / 7
@@ -179,21 +202,20 @@ function drawEdge(
 
   if (e.from === e.to) {
     const { index, total } = pinfo
-    const ang = total > 1 ? (-Math.PI / 4 + (index / total) * Math.PI * 2) : Math.PI / 4
-    const cx = a.x + Math.cos(ang) * r * 1.7
-    const cy = a.y + Math.sin(ang) * r * 1.7
-    const rr = r * 0.55
+    const g = selfLoopGeometry(a, r, index, total)
     ctx.beginPath()
-    ctx.arc(cx, cy, rr, 0, Math.PI * 2)
+    ctx.moveTo(g.sx, g.sy)
+    ctx.bezierCurveTo(g.cx1, g.cy1, g.cx2, g.cy2, g.ex, g.ey)
     ctx.stroke()
     if (directed) {
-      const ax = Math.cos(ang + Math.PI / 2)
-      const ay = Math.sin(ang + Math.PI / 2)
-      arrowHead(ctx, { x: cx + ax * rr, y: cy + ay * rr }, { x: cx + ax * rr * 1.15, y: cy + ay * rr * 1.15 }, arrow)
+      const tdx = g.ex - g.cx2
+      const tdy = g.ey - g.cy2
+      const tl = Math.hypot(tdx, tdy) || 1
+      arrowHead(ctx, { x: g.ex - (tdx / tl) * r, y: g.ey - (tdy / tl) * r }, { x: g.ex, y: g.ey }, arrow)
     }
     const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
     if (text) {
-      drawEdgeLabel(ctx, cx, cy, text, theme)
+      drawEdgeLabel(ctx, (g.sx + 3 * g.cx1 + 3 * g.cx2 + g.ex) / 8, (g.sy + 3 * g.cy1 + 3 * g.cy2 + g.ey) / 8, text, theme)
     }
     return
   }

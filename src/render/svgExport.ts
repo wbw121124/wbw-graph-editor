@@ -1,7 +1,7 @@
 import { WORLD_SIZE, type GraphData, type GraphEdge, type GraphNode } from '../types/graph'
 import { ALGO_COLORS, canvasTheme, graphStyle } from '../store/theme'
 import type { AlgoOverlayState } from './overlay'
-import { bendOf, buildParallelInfo, edgeControlPoint } from './canvasRenderer'
+import { bendOf, buildParallelInfo, edgeControlPoint, selfLoopGeometry } from './canvasRenderer'
 
 const FONT_FAMILY = 'Segoe UI, PingFang SC, Microsoft YaHei, sans-serif'
 
@@ -55,27 +55,27 @@ function edgeMarkup(
 
   if (e.from === e.to) {
     const { index, total } = pinfo
-    const ang = total > 1 ? -Math.PI / 4 + (index / total) * Math.PI * 2 : Math.PI / 4
-    const cx = a.x + Math.cos(ang) * r * 1.7
-    const cy = a.y + Math.sin(ang) * r * 1.7
-    const rr = r * 0.55
+    const g = selfLoopGeometry(a, r, index, total)
     parts.push(
-      `<circle cx="${num(cx)}" cy="${num(cy)}" r="${num(rr)}" fill="none" stroke="${esc(color)}" stroke-width="${width}"/>`,
+      `<path d="M ${num(g.sx)} ${num(g.sy)} C ${num(g.cx1)} ${num(g.cy1)} ${num(g.cx2)} ${num(g.cy2)} ${num(g.ex)} ${num(g.ey)}" fill="none" stroke="${esc(color)}" stroke-width="${width}"/>`,
     )
     if (directed) {
-      const ax = Math.cos(ang + Math.PI / 2)
-      const ay = Math.sin(ang + Math.PI / 2)
+      const tdx = g.ex - g.cx2
+      const tdy = g.ey - g.cy2
+      const tl = Math.hypot(tdx, tdy) || 1
       parts.push(
-        `<polygon points="${arrowPoints(cx + ax * rr, cy + ay * rr, cx + ax * rr * 1.15, cy + ay * rr * 1.15, arrow)}" fill="${esc(color)}"/>`,
+        `<polygon points="${arrowPoints(g.ex - (tdx / tl) * r, g.ey - (tdy / tl) * r, g.ex, g.ey, arrow)}" fill="${esc(color)}"/>`,
       )
     }
     if (text) {
       const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
       const h = fs + 6
       const w = approxTextWidth(text, fs) + 8
-      parts.push(`<rect x="${num(cx - w / 2)}" y="${num(cy - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
+      const lx = (g.sx + 3 * g.cx1 + 3 * g.cx2 + g.ex) / 8
+      const ly = (g.sy + 3 * g.cy1 + 3 * g.cy2 + g.ey) / 8
+      parts.push(`<rect x="${num(lx - w / 2)}" y="${num(ly - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
       parts.push(
-        `<text x="${num(cx)}" y="${num(cy)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
+        `<text x="${num(lx)}" y="${num(ly)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
       )
     }
     return parts.join('')

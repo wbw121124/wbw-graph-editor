@@ -7,9 +7,11 @@ import {
   bendOf,
   buildParallelInfo,
   clamp,
+  cubicPoint,
   edgeControlPoint,
   quadPoint,
   screenToWorld,
+  selfLoopGeometry,
   type UiHoverState,
   type ViewTransform,
 } from '../render/canvasRenderer'
@@ -62,8 +64,22 @@ export function useCanvasInteraction(
       const a = graphStore.graph.nodes.find((n) => n.id === e.from)
       const b = graphStore.graph.nodes.find((n) => n.id === e.to)
       if (!a || !b) continue
-      if (a === b) continue
       const { index, total } = parallel.get(e.id) ?? { index: 0, total: 1 }
+      if (a === b) {
+        const g = selfLoopGeometry(a, graphStyle.nodeRadius, index, total)
+        let d = Infinity
+        let prev = { x: g.sx, y: g.sy }
+        for (let s = 1; s <= 12; s++) {
+          const cur = cubicPoint({ x: g.sx, y: g.sy }, { x: g.cx1, y: g.cy1 }, { x: g.cx2, y: g.cy2 }, { x: g.ex, y: g.ey }, s / 12)
+          d = Math.min(d, distToSegment(p.x, p.y, prev.x, prev.y, cur.x, cur.y))
+          prev = cur
+        }
+        if (d < bestDist && d < 10 / view.scale + 2) {
+          bestDist = d
+          bestEdge = e.id
+        }
+        continue
+      }
       const bend = bendOf(index, total) * (e.from <= e.to ? 1 : -1)
       const c = edgeControlPoint(a, b, bend)
       let d = Infinity
@@ -250,5 +266,5 @@ export function useCanvasInteraction(
     return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
   }
 
-  return { onMouseDown, onMouseMove, onMouseUp, onDblClick, onMouseLeave, onWheel }
+  return { onMouseDown, onMouseMove, onMouseUp, onDblClick, onMouseLeave, onWheel, hitTest }
 }

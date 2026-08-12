@@ -8,6 +8,13 @@
       <button :disabled="!graphStore.canRedo" @click="graphStore.redo()">{{ t('app.redo') }}</button>
       <button class="ghost" @click="toggleTheme">{{ themeName === 'dark' ? t('app.toLight') : t('app.toDark') }}</button>
       <button class="ghost" @click="toggleLang">{{ locale === 'zh' ? t('app.langEn') : t('app.langZh') }}</button>
+      <a
+        class="ghost github-link"
+        href="https://github.com/wbw121124/wbw-graph-editor"
+        target="_blank"
+        rel="noreferrer"
+        :title="t('app.github')"
+      >GitHub ↗</a>
     </header>
 
     <main class="main">
@@ -48,6 +55,8 @@
     <EditDialogs />
     <MarkupDialog />
     <MatrixDialog />
+    <ContextMenu />
+    <ShortcutHelp />
   </div>
 </template>
 
@@ -66,15 +75,23 @@ import AlgoControlBar from './components/AlgoControlBar.vue'
 import AlgoLog from './components/AlgoLog.vue'
 import AlgorithmEditor from './components/AlgorithmEditor.vue'
 import MatrixDialog from './components/MatrixDialog.vue'
+import ContextMenu from './components/ContextMenu.vue'
+import ShortcutHelp from './components/ShortcutHelp.vue'
 import { graphStore } from './store/graphStore'
 import { themeName, toggleTheme } from './store/theme'
 import { uiState } from './store/ui'
+import { applyShare, restoreAuto, setupAutoSave } from './store/persistence'
 
 const canvasRef = ref<InstanceType<typeof GraphCanvas> | null>(null)
 
 function toggleLang() {
   setLocale(locale.value === 'zh' ? 'en' : 'zh')
 }
+
+if (!applyShare(location.hash)) {
+  restoreAuto()
+}
+setupAutoSave()
 </script>
 
 <style scoped>
@@ -106,6 +123,19 @@ function toggleLang() {
 .sub {
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.github-link {
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.github-link:hover {
+  color: var(--accent);
 }
 
 .spacer {

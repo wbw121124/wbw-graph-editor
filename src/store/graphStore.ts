@@ -128,7 +128,6 @@ export class GraphStore {
   }
 
   addEdgeBetween(from: string, to: string, weight: number | null = null, capacity: number | null = null, cost: number | null = null): GraphEdge | null {
-    if (from === to) return null
     this.commit()
     const edge: GraphEdge = {
       id: `e${edgeSeq++}`,

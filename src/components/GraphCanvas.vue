@@ -9,6 +9,7 @@
       @dblclick="handlers.onDblClick"
       @mouseleave="onCanvasLeave"
       @wheel="handlers.onWheel"
+      @contextmenu="onCanvasMenu"
     ></canvas>
     <Transition name="tip">
       <div
@@ -32,6 +33,7 @@ import {
   drawScene,
   fitView,
   fitWorld,
+  screenToWorld,
   worldToScreen,
   type UiHoverState,
   type ViewTransform,
@@ -171,6 +173,26 @@ function onCanvasLeave() {
   }, 100)
 }
 
+function onCanvasMenu(e: MouseEvent) {
+  e.preventDefault()
+  const el = canvasRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const mx = e.clientX - rect.left
+  const my = e.clientY - rect.top
+  const hit = handlers.hitTest(mx, my)
+  const w = screenToWorld(view, mx, my)
+  uiState.ctxMenu = {
+    x: e.clientX,
+    y: e.clientY,
+    visible: true,
+    nodeId: hit.nodeId,
+    edgeId: hit.edgeId,
+    wx: w.x,
+    wy: w.y,
+  }
+}
+
 watch(
   () => [hover.hoverNodeId, hover.hoverEdgeId],
   () => updateTip(),
@@ -210,6 +232,12 @@ function onKeydown(e: KeyboardEvent) {
     hover.selectedEdgeId = null
     hover.tempEdgeFromId = null
     hover.tempEdgeTarget = null
+    uiState.ctxMenu.visible = false
+    return
+  }
+  if (e.key === 'F1' || e.key === '?') {
+    e.preventDefault()
+    uiState.showShortcuts = true
     return
   }
   if (e.key === 'Enter' && uiState.mode === 'select') {

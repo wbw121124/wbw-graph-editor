@@ -5,9 +5,13 @@
       <button @click="fixAll(true)">{{ t('cmd.fixAll') }}</button>
       <button @click="fixAll(false)">{{ t('cmd.unfixAll') }}</button>
       <button @click="treeLayout">{{ t('cmd.tree') }}</button>
+      <button @click="circleLayout">{{ t('cmd.circle') }}</button>
+      <button @click="gridLayout">{{ t('cmd.grid') }}</button>
       <button @click="fit">{{ t('cmd.fit') }}</button>
       <button @click="downloadPng">{{ t('cmd.png') }}</button>
       <button @click="downloadSvg">{{ t('cmd.svg') }}</button>
+      <button @click="copyPng">{{ t('cmd.copyPng') }}</button>
+      <button @click="copyLink">{{ t('cmd.copyLink') }}</button>
       <button @click="showMarkup">{{ t('cmd.markup') }}</button>
     </div>
   </div>
@@ -17,8 +21,10 @@
 import { graphStore } from '../store/graphStore'
 import { graphStyle } from '../store/theme'
 import { arrangeAsTree } from '../core/treeLayout'
+import { arrangeAsCircle, arrangeAsGrid } from '../core/arrangeLayouts'
 import { generateTikZ } from '../core/markup'
 import { uiState } from '../store/ui'
+import { encodeShare } from '../store/persistence'
 import { t } from '../i18n'
 import { drawScene, type UiHoverState } from '../render/canvasRenderer'
 import { buildSvg } from '../render/svgExport'
@@ -38,18 +44,25 @@ function treeLayout() {
   arrangeAsTree()
 }
 
+function circleLayout() {
+  arrangeAsCircle()
+}
+
+function gridLayout() {
+  arrangeAsGrid()
+}
+
 function fit() {
   props.canvas?.fitView()
 }
 
-function downloadPng() {
-  const exportScale = graphStore.graph.nodes.length > 300 ? 3 : 4
+function renderExportCanvas(exportScale: number): HTMLCanvasElement {
   const size = WORLD_SIZE * exportScale
   const cv = document.createElement('canvas')
   cv.width = size
   cv.height = size
   const ctx = cv.getContext('2d')
-  if (!ctx) return
+  if (!ctx) return cv
   ctx.setTransform(exportScale, 0, 0, exportScale, 0, 0)
   const emptyHover: UiHoverState = {
     hoverNodeId: null,
@@ -71,6 +84,12 @@ function downloadPng() {
     false,
     graphStyle.exportTransparentBg,
   )
+  return cv
+}
+
+function downloadPng() {
+  const exportScale = graphStore.graph.nodes.length > 300 ? 3 : 4
+  const cv = renderExportCanvas(exportScale)
   const a = document.createElement('a')
   a.download = 'graph.png'
   a.href = cv.toDataURL('image/png')
@@ -86,6 +105,35 @@ function downloadSvg() {
   a.download = 'graph.svg'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+function copyPng() {
+  const exportScale = graphStore.graph.nodes.length > 300 ? 3 : 4
+  const cv = renderExportCanvas(exportScale)
+  cv.toBlob((blob) => {
+    if (!blob) return
+    if (navigator.clipboard?.write) {
+      navigator.clipboard
+        .write([new ClipboardItem({ 'image/png': blob })])
+        .catch(() => fallbackPng(cv))
+    } else {
+      fallbackPng(cv)
+    }
+  }, 'image/png')
+}
+
+function fallbackPng(cv: HTMLCanvasElement) {
+  const a = document.createElement('a')
+  a.download = 'graph.png'
+  a.href = cv.toDataURL('image/png')
+  a.click()
+}
+
+function copyLink() {
+  const url = location.origin + location.pathname + encodeShare()
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).catch(() => {})
+  }
 }
 
 function showMarkup() {
