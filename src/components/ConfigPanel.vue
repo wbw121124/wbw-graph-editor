@@ -1,76 +1,76 @@
 <template>
   <div class="section">
-    <h3>样式配置</h3>
+    <h3>{{ t('cfg.title') }}</h3>
     <div class="cfg-row">
-      <span class="label">节点半径</span>
+      <span class="label">{{ t('cfg.nodeRadius') }}</span>
       <input v-model.number="style.nodeRadius" type="range" min="10" max="45" />
       <span class="val">{{ style.nodeRadius }}</span>
     </div>
     <div class="cfg-row">
-      <span class="label">边理想长度</span>
+      <span class="label">{{ t('cfg.edgeLen') }}</span>
       <input v-model.number="style.edgeIdealLength" type="range" min="50" max="300" step="5" />
       <span class="val">{{ style.edgeIdealLength }}</span>
     </div>
     <div class="cfg-row">
-      <span class="label">排斥强度</span>
+      <span class="label">{{ t('cfg.repulsion') }}</span>
       <input v-model.number="style.repulsionK" type="range" min="0" max="6000000" step="100000" />
       <span class="val">{{ style.repulsionK.toExponential(1).replace('e+', 'e') }}</span>
     </div>
-    <p v-if="repOff" class="rep-off">节点数 > 300，排斥力已自动关闭</p>
+    <p v-if="repOff" class="rep-off">{{ t('cfg.repOff') }}</p>
     <div class="cfg-row">
-      <span class="label">边线宽度</span>
+      <span class="label">{{ t('cfg.edgeWidth') }}</span>
       <input v-model.number="style.edgeWidth" type="range" min="1" max="6" step="0.2" />
       <span class="val">{{ style.edgeWidth.toFixed(1) }}</span>
     </div>
     <div class="cfg-row">
-      <span class="label">标签字号</span>
+      <span class="label">{{ t('cfg.fontSize') }}</span>
       <input v-model.number="style.nodeFontSize" type="range" min="10" max="24" />
       <span class="val">{{ style.nodeFontSize }}</span>
     </div>
     <div class="cfg-row">
-      <span class="label">箭头大小</span>
+      <span class="label">{{ t('cfg.arrowSize') }}</span>
       <input v-model.number="style.arrowSize" type="range" min="4" max="14" />
       <span class="val">{{ style.arrowSize }}</span>
     </div>
     <div class="cfg-row">
-      <span class="label">网格间距</span>
+      <span class="label">{{ t('cfg.gridSpacing') }}</span>
       <input v-model.number="style.gridSpacing" type="range" min="20" max="120" step="5" />
       <span class="val">{{ style.gridSpacing }}</span>
     </div>
     <div class="color-block">
       <div class="cfg-row">
-        <span class="label">节点填充</span>
+        <span class="label">{{ t('cfg.nodeFill') }}</span>
         <input v-model="style.nodeFill" type="color" />
-        <button class="reset" @click="style.nodeFill = ''">默认</button>
+        <button class="reset" @click="style.nodeFill = ''">{{ t('cfg.default') }}</button>
       </div>
       <ColorSwatches v-model="style.nodeFill" />
     </div>
     <div class="color-block">
       <div class="cfg-row">
-        <span class="label">节点描边</span>
+        <span class="label">{{ t('cfg.nodeStroke') }}</span>
         <input v-model="style.nodeStroke" type="color" />
-        <button class="reset" @click="style.nodeStroke = ''">默认</button>
+        <button class="reset" @click="style.nodeStroke = ''">{{ t('cfg.default') }}</button>
       </div>
       <ColorSwatches v-model="style.nodeStroke" />
     </div>
     <div class="color-block">
       <div class="cfg-row">
-        <span class="label">标签颜色</span>
+        <span class="label">{{ t('cfg.labelColor') }}</span>
         <input v-model="style.labelColor" type="color" />
-        <button class="reset" @click="style.labelColor = ''">默认</button>
+        <button class="reset" @click="style.labelColor = ''">{{ t('cfg.default') }}</button>
       </div>
       <ColorSwatches v-model="style.labelColor" />
     </div>
     <div class="color-block">
       <div class="cfg-row">
-        <span class="label">边颜色</span>
+        <span class="label">{{ t('cfg.edgeColor') }}</span>
         <input v-model="style.edgeColor" type="color" />
-        <button class="reset" @click="style.edgeColor = ''">默认</button>
+        <button class="reset" @click="style.edgeColor = ''">{{ t('cfg.default') }}</button>
       </div>
       <ColorSwatches v-model="style.edgeColor" />
     </div>
-    <label class="check"><input v-model="style.showGrid" type="checkbox" /> 显示网格</label>
-    <label class="check"><input v-model="style.exportTransparentBg" type="checkbox" /> 导出背景透明</label>
+    <label class="check"><input v-model="style.showGrid" type="checkbox" /> {{ t('cfg.showGrid') }}</label>
+    <label class="check"><input v-model="style.exportTransparentBg" type="checkbox" /> {{ t('cfg.transparentBg') }}</label>
   </div>
 </template>
 
@@ -79,6 +79,7 @@ import { computed } from 'vue'
 import { graphStyle } from '../store/theme'
 import { graphStore } from '../store/graphStore'
 import { REPULSION_AUTO_OFF_THRESHOLD } from '../core/forceLayout'
+import { t } from '../i18n'
 import ColorSwatches from './ColorSwatches.vue'
 
 const style = graphStyle

@@ -1,14 +1,14 @@
 <template>
   <div class="section">
-    <h3>命令</h3>
+    <h3>{{ t('cmd.title') }}</h3>
     <div class="cmd-grid">
-      <button @click="fixAll(true)">固定全部</button>
-      <button @click="fixAll(false)">解除固定</button>
-      <button @click="treeLayout">树形排列</button>
-      <button @click="fit">适应视图</button>
-      <button @click="downloadPng">下载 PNG</button>
-      <button @click="downloadSvg">下载 SVG</button>
-      <button @click="showMarkup">生成标记</button>
+      <button @click="fixAll(true)">{{ t('cmd.fixAll') }}</button>
+      <button @click="fixAll(false)">{{ t('cmd.unfixAll') }}</button>
+      <button @click="treeLayout">{{ t('cmd.tree') }}</button>
+      <button @click="fit">{{ t('cmd.fit') }}</button>
+      <button @click="downloadPng">{{ t('cmd.png') }}</button>
+      <button @click="downloadSvg">{{ t('cmd.svg') }}</button>
+      <button @click="showMarkup">{{ t('cmd.markup') }}</button>
     </div>
   </div>
 </template>
@@ -19,6 +19,7 @@ import { graphStyle } from '../store/theme'
 import { arrangeAsTree } from '../core/treeLayout'
 import { generateTikZ } from '../core/markup'
 import { uiState } from '../store/ui'
+import { t } from '../i18n'
 import { drawScene, type UiHoverState } from '../render/canvasRenderer'
 import { buildSvg } from '../render/svgExport'
 import { algoOverlay } from '../render/overlay'

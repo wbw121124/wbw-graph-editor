@@ -1,11 +1,11 @@
 <template>
   <div v-if="node" class="dialog-mask" @mousedown.self="close">
     <div class="dialog">
-      <h3>编辑节点标签</h3>
+      <h3>{{ t('ed.nodeTitle') }}</h3>
       <input v-model="labelInput" class="input" @keydown.enter="save" />
       <div class="field">
-        <span>注释</span>
-        <input v-model="nodeCommentInput" class="input" placeholder="可选" @keydown.enter="save" />
+        <span>{{ t('ed.comment') }}</span>
+        <input v-model="nodeCommentInput" class="input" :placeholder="t('ed.commentPlaceholder')" @keydown.enter="save" />
       </div>
       <div class="field">
         <span>X</span>
@@ -16,8 +16,8 @@
         <input v-model.number="nodeYInput" type="number" class="input" @keydown.enter="save" />
       </div>
       <div class="dialog-actions">
-        <button @click="close">取消</button>
-        <button class="primary" @click="save">保存</button>
+        <button @click="close">{{ t('ed.cancel') }}</button>
+        <button class="primary" @click="save">{{ t('ed.save') }}</button>
       </div>
     </div>
   </div>
@@ -25,29 +25,29 @@
   <div v-if="edge" class="dialog-mask" @mousedown.self="close">
     <div class="dialog">
       <h3>
-        编辑边
-        <span class="dim">({{ fromLabel }} → {{ toLabel }})</span>
+        {{ t('ed.edgeTitle') }}
+        <span class="dim">{{ t('ed.edgeRange', { from: fromLabel, to: toLabel }) }}</span>
       </h3>
       <div class="field">
-        <span>权重</span>
-        <input v-model="weightInput" class="input" placeholder="空表示无权重" />
+        <span>{{ t('ed.weight') }}</span>
+        <input v-model="weightInput" class="input" :placeholder="t('ed.weightPlaceholder')" />
       </div>
       <div class="field">
-        <span>容量</span>
-        <input v-model="capacityInput" class="input" placeholder="空表示未设置" />
+        <span>{{ t('ed.capacity') }}</span>
+        <input v-model="capacityInput" class="input" :placeholder="t('ed.propsPlaceholder')" />
       </div>
       <div class="field">
-        <span>费用</span>
-        <input v-model="costInput" class="input" placeholder="空表示未设置" />
+        <span>{{ t('ed.cost') }}</span>
+        <input v-model="costInput" class="input" :placeholder="t('ed.propsPlaceholder')" />
       </div>
       <div class="field">
-        <span>注释</span>
-        <input v-model="edgeCommentInput" class="input" placeholder="可选" />
+        <span>{{ t('ed.comment') }}</span>
+        <input v-model="edgeCommentInput" class="input" :placeholder="t('ed.commentPlaceholder')" />
       </div>
       <div class="dialog-actions">
-        <button :disabled="!graphStore.graph.directed" @click="reverse">翻转方向</button>
-        <button @click="close">取消</button>
-        <button class="primary" @click="saveEdge">保存</button>
+        <button :disabled="!graphStore.graph.directed" @click="reverse">{{ t('ed.reverse') }}</button>
+        <button @click="close">{{ t('ed.cancel') }}</button>
+        <button class="primary" @click="saveEdge">{{ t('ed.save') }}</button>
       </div>
     </div>
   </div>
@@ -58,6 +58,7 @@ import { computed, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { uiState } from '../store/ui'
 import { WORLD_SIZE } from '../types/graph'
+import { t } from '../i18n'
 
 const labelInput = ref('')
 const nodeCommentInput = ref('')
