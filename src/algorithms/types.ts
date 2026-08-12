@@ -30,16 +30,16 @@ export interface AlgoContext {
   targetId: string | null
 }
 
-export type AlgoCategory = '遍历' | '最短路' | '最小生成树' | '结构' | '网络流' | '匹配'
+export type AlgoCategory = 'cat.traverse' | 'cat.shortest' | 'cat.mst' | 'cat.structure' | 'cat.flow' | 'cat.matching'
 
 export interface AlgoMeta {
   id: string
-  name: string
+  nameKey: string
   category: AlgoCategory
   needsSource?: boolean
   needsTarget?: boolean
   requiresWeights?: boolean
   requiresCapacity?: boolean
   requiresDirected?: boolean
-  hint?: string
+  hintKey?: string
 }

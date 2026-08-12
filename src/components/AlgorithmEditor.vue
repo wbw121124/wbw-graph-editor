@@ -36,7 +36,7 @@ import { algoRunner } from '../algorithms/runner'
 import { createGraphAPI } from '../algorithms/graphAPI'
 import { ALGO_TEMPLATES } from '../algorithms/templates'
 import { themeName } from '../store/theme'
-import { t } from '../i18n'
+import { locale, t } from '../i18n'
 
 interface SavedAlgo {
   id: string
@@ -104,10 +104,11 @@ function applySelected() {
   if (key.startsWith('t:')) {
     const tpl = templates.find((x) => x.id === key.slice(2))
     if (!tpl) return
-    code.value = tpl.code
+    const tplCode = tpl.codes[locale.value]
+    code.value = tplCode
     name.value = t(tpl.nameKey)
     currentSavedId.value = null
-    buildEditor(tpl.code)
+    buildEditor(tplCode)
   } else if (key.startsWith('s:')) {
     const a = savedAlgos.value.find((x) => x.id === key.slice(2))
     if (!a) return
