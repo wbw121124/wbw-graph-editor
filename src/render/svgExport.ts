@@ -47,7 +47,8 @@ function edgeMarkup(
   const r = nodeRadius()
   const color = overlay.edgeColors.get(e.id) ?? (graphStyle.edgeColor || theme.edgeColor)
   const isAlgo = overlay.edgeColors.has(e.id)
-  const width = isAlgo ? 2.6 : 1.6
+  const width = isAlgo ? graphStyle.edgeWidth + 1 : graphStyle.edgeWidth
+  const arrow = graphStyle.arrowSize
   const parts: string[] = []
 
   const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
@@ -65,14 +66,16 @@ function edgeMarkup(
       const ax = Math.cos(ang + Math.PI / 2)
       const ay = Math.sin(ang + Math.PI / 2)
       parts.push(
-        `<polygon points="${arrowPoints(cx + ax * rr, cy + ay * rr, cx + ax * rr * 1.15, cy + ay * rr * 1.15, 8)}" fill="${esc(color)}"/>`,
+        `<polygon points="${arrowPoints(cx + ax * rr, cy + ay * rr, cx + ax * rr * 1.15, cy + ay * rr * 1.15, arrow)}" fill="${esc(color)}"/>`,
       )
     }
     if (text) {
-      const w = approxTextWidth(text, 12) + 8
-      parts.push(`<rect x="${num(cx - w / 2)}" y="${num(cy - 10)}" width="${num(w)}" height="18" rx="4" fill="${esc(theme.bg)}"/>`)
+      const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
+      const h = fs + 6
+      const w = approxTextWidth(text, fs) + 8
+      parts.push(`<rect x="${num(cx - w / 2)}" y="${num(cy - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
       parts.push(
-        `<text x="${num(cx)}" y="${num(cy)}" font-family="${FONT_FAMILY}" font-size="12" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
+        `<text x="${num(cx)}" y="${num(cy)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
       )
     }
     return parts.join('')
@@ -102,7 +105,7 @@ function edgeMarkup(
       const tdy = ey - c.y
       const tl = Math.hypot(tdx, tdy) || 1
       parts.push(
-        `<polygon points="${arrowPoints(ex - (tdx / tl) * r, ey - (tdy / tl) * r, ex, ey, 9)}" fill="${esc(color)}"/>`,
+        `<polygon points="${arrowPoints(ex - (tdx / tl) * r, ey - (tdy / tl) * r, ex, ey, arrow)}" fill="${esc(color)}"/>`,
       )
     }
     labelX = (sx + ex) / 2 - (uy * bend) / 2
@@ -110,15 +113,17 @@ function edgeMarkup(
   } else {
     parts.push(`<line x1="${num(sx)}" y1="${num(sy)}" x2="${num(ex)}" y2="${num(ey)}" stroke="${esc(color)}" stroke-width="${width}"/>`)
     if (directed) {
-      parts.push(`<polygon points="${arrowPoints(ex - ux * r, ey - uy * r, ex, ey, 9)}" fill="${esc(color)}"/>`)
+      parts.push(`<polygon points="${arrowPoints(ex - ux * r, ey - uy * r, ex, ey, arrow)}" fill="${esc(color)}"/>`)
     }
   }
 
   if (text) {
-    const w = approxTextWidth(text, 12) + 8
-    parts.push(`<rect x="${num(labelX - w / 2)}" y="${num(labelY - 10)}" width="${num(w)}" height="18" rx="4" fill="${esc(theme.bg)}"/>`)
+    const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
+    const h = fs + 6
+    const w = approxTextWidth(text, fs) + 8
+    parts.push(`<rect x="${num(labelX - w / 2)}" y="${num(labelY - h / 2)}" width="${num(w)}" height="${num(h)}" rx="4" fill="${esc(theme.bg)}"/>`)
     parts.push(
-      `<text x="${num(labelX)}" y="${num(labelY)}" font-family="${FONT_FAMILY}" font-size="12" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
+      `<text x="${num(labelX)}" y="${num(labelY)}" font-family="${FONT_FAMILY}" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(theme.labelColor)}">${esc(text)}</text>`,
     )
   }
   return parts.join('')
@@ -145,7 +150,7 @@ function nodeMarkup(n: GraphNode, overlay: AlgoOverlayState): string {
     parts.push(`<circle cx="${num(n.x)}" cy="${num(n.y)}" r="${num(r + 6)}" fill="none" stroke="rgba(255,167,38,0.35)" stroke-width="3"/>`)
   }
   parts.push(
-    `<text x="${num(n.x)}" y="${num(n.y)}" font-family="${FONT_FAMILY}" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(graphStyle.labelColor || theme.labelColor)}">${esc(n.label)}</text>`,
+    `<text x="${num(n.x)}" y="${num(n.y)}" font-family="${FONT_FAMILY}" font-size="${graphStyle.nodeFontSize}" font-weight="600" text-anchor="middle" dominant-baseline="middle" fill="${esc(graphStyle.labelColor || theme.labelColor)}">${esc(n.label)}</text>`,
   )
   const value = overlay.nodeValues.get(n.id)
   if (value !== undefined) {
@@ -177,7 +182,7 @@ export function buildSvg(graph: GraphData, overlay: AlgoOverlayState, opts: SvgE
 
   if (graphStyle.showGrid) {
     const gridParts: string[] = []
-    for (let g = 0; g <= WORLD_SIZE; g += 50) {
+    for (let g = 0; g <= WORLD_SIZE; g += graphStyle.gridSpacing) {
       gridParts.push(`M ${g} 0 V ${WORLD_SIZE}`)
       gridParts.push(`M 0 ${g} H ${WORLD_SIZE}`)
     }

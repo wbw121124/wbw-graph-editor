@@ -37,4 +37,8 @@ export interface GraphStyle {
   edgeColor: string
   showGrid: boolean
   exportTransparentBg: boolean
+  edgeWidth: number
+  nodeFontSize: number
+  arrowSize: number
+  gridSpacing: number
 }

@@ -87,4 +87,8 @@ export const graphStyle = reactive<GraphStyle>({
   edgeColor: '',
   showGrid: true,
   exportTransparentBg: false,
+  edgeWidth: 1.6,
+  nodeFontSize: 13,
+  arrowSize: 9,
+  gridSpacing: 50,
 })

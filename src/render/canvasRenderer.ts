@@ -69,7 +69,8 @@ function edgeColorOf(overlay: AlgoOverlayState, id: string): string | null {
 
 function drawGrid(ctx: CanvasRenderingContext2D, view: ViewTransform, width: number, height: number) {
   const theme = canvasTheme.value
-  const step = 50 * view.scale
+  const spacing = graphStyle.gridSpacing
+  const step = spacing * view.scale
   if (step < 8) return
   ctx.strokeStyle = theme.grid
   ctx.lineWidth = 1
@@ -78,14 +79,14 @@ function drawGrid(ctx: CanvasRenderingContext2D, view: ViewTransform, width: num
   const y0 = -view.offsetY / view.scale
   const worldW = width / view.scale
   const worldH = height / view.scale
-  const startX = Math.floor(x0 / 50) * 50
-  const startY = Math.floor(y0 / 50) * 50
-  for (let gx = startX; gx < x0 + worldW; gx += 50) {
+  const startX = Math.floor(x0 / spacing) * spacing
+  const startY = Math.floor(y0 / spacing) * spacing
+  for (let gx = startX; gx < x0 + worldW; gx += spacing) {
     const sx = gx * view.scale + view.offsetX
     ctx.moveTo(sx, 0)
     ctx.lineTo(sx, height)
   }
-  for (let gy = startY; gy < y0 + worldH; gy += 50) {
+  for (let gy = startY; gy < y0 + worldH; gy += spacing) {
     const sy = gy * view.scale + view.offsetY
     ctx.moveTo(0, sy)
     ctx.lineTo(width, sy)
@@ -172,8 +173,9 @@ function drawEdge(
   const isSelected = hover.selectedEdgeId === e.id
   const color = edgeColorOf(overlay, e.id) ?? (isHover ? theme.hover : isSelected ? theme.selected : graphStyle.edgeColor || theme.edgeColor)
   ctx.strokeStyle = color
-  ctx.lineWidth = isAlgo ? 2.6 : isSelected ? 2.6 : isHover ? 2.4 : 1.6
+  ctx.lineWidth = isAlgo || isSelected ? graphStyle.edgeWidth + 1 : isHover ? graphStyle.edgeWidth + 0.8 : graphStyle.edgeWidth
   ctx.fillStyle = color
+  const arrow = graphStyle.arrowSize
 
   if (e.from === e.to) {
     const { index, total } = pinfo
@@ -187,7 +189,7 @@ function drawEdge(
     if (directed) {
       const ax = Math.cos(ang + Math.PI / 2)
       const ay = Math.sin(ang + Math.PI / 2)
-      arrowHead(ctx, { x: cx + ax * rr, y: cy + ay * rr }, { x: cx + ax * rr * 1.15, y: cy + ay * rr * 1.15 }, 8)
+      arrowHead(ctx, { x: cx + ax * rr, y: cy + ay * rr }, { x: cx + ax * rr * 1.15, y: cy + ay * rr * 1.15 }, arrow)
     }
     const text = overlay.edgeValues.get(e.id) ?? (e.weight !== null ? String(e.weight) : '')
     if (text) {
@@ -220,7 +222,7 @@ function drawEdge(
       const tdx = ex - c.x
       const tdy = ey - c.y
       const tl = Math.hypot(tdx, tdy) || 1
-      arrowHead(ctx, { x: ex - (tdx / tl) * r, y: ey - (tdy / tl) * r }, { x: ex, y: ey }, 9)
+      arrowHead(ctx, { x: ex - (tdx / tl) * r, y: ey - (tdy / tl) * r }, { x: ex, y: ey }, arrow)
     }
     const mid = quadPoint({ x: sx, y: sy }, c, { x: ex, y: ey }, 0.5)
     labelX = mid.x
@@ -232,7 +234,7 @@ function drawEdge(
     ctx.stroke()
 
     if (directed) {
-      arrowHead(ctx, { x: ex - ux * r, y: ey - uy * r }, { x: ex, y: ey }, 9)
+      arrowHead(ctx, { x: ex - ux * r, y: ey - uy * r }, { x: ex, y: ey }, arrow)
     }
   }
 
@@ -243,11 +245,13 @@ function drawEdge(
 }
 
 function drawEdgeLabel(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, theme: { bg: string; labelColor: string }) {
-  ctx.font = '600 12px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+  const fs = Math.max(10, Math.round(graphStyle.nodeFontSize * 0.92))
+  const h = fs + 6
+  ctx.font = `600 ${fs}px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`
   const w = ctx.measureText(text).width + 8
   ctx.fillStyle = theme.bg
   ctx.beginPath()
-  ctx.roundRect(x - w / 2, y - 10, w, 18, 4)
+  ctx.roundRect(x - w / 2, y - h / 2, w, h, 4)
   ctx.fill()
   ctx.fillStyle = theme.labelColor
   ctx.textAlign = 'center'
@@ -302,7 +306,7 @@ function drawNode(
   }
 
   ctx.fillStyle = graphStyle.labelColor || theme.labelColor
-  ctx.font = '600 13px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+  ctx.font = `600 ${graphStyle.nodeFontSize}px "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(n.label, n.x, n.y + 0.5)
