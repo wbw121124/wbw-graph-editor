@@ -159,6 +159,15 @@ export class GraphStore {
     e.cost = cost
   }
 
+  reverseEdge(id: string) {
+    const e = this.graph.edges.find((x) => x.id === id)
+    if (!e) return
+    this.commit()
+    const t = e.from
+    e.from = e.to
+    e.to = t
+  }
+
   setNodeComment(id: string, comment: string) {
     const n = this.graph.nodes.find((x) => x.id === id)
     if (!n || (n.comment ?? '') === comment.trim()) return

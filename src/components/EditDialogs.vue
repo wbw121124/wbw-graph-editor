@@ -37,6 +37,7 @@
         <input v-model="edgeCommentInput" class="input" placeholder="可选" />
       </div>
       <div class="dialog-actions">
+        <button :disabled="!graphStore.graph.directed" @click="reverse">翻转方向</button>
         <button @click="close">取消</button>
         <button class="primary" @click="saveEdge">保存</button>
       </div>
@@ -98,6 +99,12 @@ function saveEdge() {
     graphStore.setEdgeComment(edge.value.id, edgeCommentInput.value)
   }
   close()
+}
+
+function reverse() {
+  if (edge.value && graphStore.graph.directed) {
+    graphStore.reverseEdge(edge.value.id)
+  }
 }
 
 function close() {
