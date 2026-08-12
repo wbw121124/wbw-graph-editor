@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { algoOverlay } from '../render/overlay'
 import { graphStyle } from '../store/theme'
@@ -154,6 +154,7 @@ function updateTip() {
   placeTip(lastMouseX, lastMouseY)
   tipLines.value = lines
   tipVisible.value = true
+  nextTick(() => placeTip(lastMouseX, lastMouseY))
 }
 
 function onCanvasMove(e: MouseEvent) {

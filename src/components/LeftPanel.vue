@@ -61,6 +61,7 @@ watch(
     const s = graphStore.serializeText()
     if (s === lastLoaded) return
     if (s !== text.value) text.value = s
+    lastLoaded = s
   },
   { deep: true },
 )
