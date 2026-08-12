@@ -1,15 +1,16 @@
 <template>
   <div v-if="algoRunner.logs.value.length > 0" class="section log-panel">
-    <h3>日志</h3>
+    <h3>{{ t('log.title') }}</h3>
     <div class="log-list">
       <div v-for="(l, i) in algoRunner.logs.value" :key="i" class="log-line">{{ l }}</div>
     </div>
-    <button class="clear-btn" @click="algoRunner.logs.value = []">清空</button>
+    <button class="clear-btn" @click="algoRunner.logs.value = []">{{ t('log.clear') }}</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { algoRunner } from '../algorithms/runner'
+import { t } from '../i18n'
 </script>
 
 <style scoped>

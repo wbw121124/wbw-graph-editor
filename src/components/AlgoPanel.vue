@@ -1,8 +1,8 @@
 <template>
   <div class="section">
-    <h3>内置算法</h3>
+    <h3>{{ t('algo.builtin') }}</h3>
     <div v-for="cat in ALGO_CATEGORIES" :key="cat" class="algo-group">
-      <div class="cat-label">{{ cat }}</div>
+      <div class="cat-label">{{ t(cat) }}</div>
       <div class="algo-grid">
         <button
           v-for="a in byCategory(cat)"
@@ -10,7 +10,7 @@
           :class="['algo-btn', { active: selected?.id === a.id }]"
           @click="select(a)"
         >
-          {{ a.name }}
+          {{ t(a.nameKey) }}
         </button>
       </div>
     </div>
@@ -18,21 +18,21 @@
     <template v-if="selected">
       <div class="params">
         <label v-if="selected.params.includes('source')" class="param">
-          源点
+          {{ t('algo.source') }}
           <select v-model="sourceId">
-            <option :value="null">未选择</option>
+            <option :value="null">{{ t('algo.none') }}</option>
             <option v-for="n in graphStore.graph.nodes" :key="n.id" :value="n.id">{{ n.label }}</option>
           </select>
         </label>
         <label v-if="selected.params.includes('target')" class="param">
-          汇点
+          {{ t('algo.target') }}
           <select v-model="targetId">
-            <option :value="null">未选择</option>
+            <option :value="null">{{ t('algo.none') }}</option>
             <option v-for="n in graphStore.graph.nodes" :key="n.id" :value="n.id">{{ n.label }}</option>
           </select>
         </label>
-        <p v-if="selected.hint" class="hint">{{ selected.hint }}</p>
-        <button class="primary run-btn" @click="run">运行</button>
+        <p v-if="selected.hintKey" class="hint">{{ t(selected.hintKey) }}</p>
+        <button class="primary run-btn" @click="run">{{ t('algo.run') }}</button>
       </div>
     </template>
   </div>
@@ -43,6 +43,7 @@ import { computed, ref } from 'vue'
 import { graphStore } from '../store/graphStore'
 import { algoRunner } from '../algorithms/runner'
 import { ALGO_CATEGORIES, ALGORITHMS, type AlgoEntry } from '../algorithms/registry'
+import { t } from '../i18n'
 
 const selectedId = ref<string | null>(null)
 const sourceId = ref<string | null>(null)
@@ -68,7 +69,7 @@ function run() {
   const algo = selected.value
   if (!algo) return
   if (graphStore.graph.nodes.length === 0) {
-    algoRunner.logs.value.push('图中没有节点')
+    algoRunner.logs.value.push(t('algo.noNodes'))
     return
   }
   algoRunner.start(

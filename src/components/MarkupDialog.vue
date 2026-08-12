@@ -2,9 +2,9 @@
   <div v-if="uiState.showMarkup" class="dialog-mask" @mousedown.self="close">
     <div class="dialog wide">
       <div class="header">
-        <h3>生成标记</h3>
-        <button class="primary" @click="copy">复制</button>
-        <button @click="close">关闭</button>
+        <h3>{{ t('mu.title') }}</h3>
+        <button class="primary" @click="copy">{{ t('mu.copy') }}</button>
+        <button @click="close">{{ t('mu.close') }}</button>
       </div>
       <textarea readonly class="markup-text" :value="uiState.markupContent"></textarea>
     </div>
@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { uiState } from '../store/ui'
+import { t } from '../i18n'
 
 function close() {
   uiState.showMarkup = false

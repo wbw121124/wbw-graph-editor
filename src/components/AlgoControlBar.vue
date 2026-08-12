@@ -2,13 +2,13 @@
 	<div class="section control-bar">
 		<div class="btn-row">
 			<button @click="playPause">
-				{{ algoRunner.auto.value ? "暂停" : "播放" }}
+				{{ algoRunner.auto.value ? t('ctrl.pause') : t('ctrl.play') }}
 			</button>
-			<button @click="algoRunner.step()">单步</button>
-			<button @click="algoRunner.cancel()">重置</button>
+			<button @click="algoRunner.step()">{{ t('ctrl.step') }}</button>
+			<button @click="algoRunner.cancel()">{{ t('ctrl.reset') }}</button>
 		</div>
 		<div class="speed-row">
-			<span class="dim">速度</span>
+			<span class="dim">{{ t('ctrl.speed') }}</span>
 			<input
 				type="range"
 				min="40"
@@ -20,13 +20,14 @@
 			<span class="val">{{ algoRunner.speed.value }}ms</span>
 		</div>
 		<div v-if="algoRunner.status === 'done'" class="done-msg">
-			{{ algoRunner.doneMessage || "完成" }}
+			{{ algoRunner.doneMessage || t('ctrl.done') }}
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { algoRunner } from "../algorithms/runner";
+import { t } from "../i18n";
 
 function playPause() {
 	if (algoRunner.auto.value) algoRunner.pause();

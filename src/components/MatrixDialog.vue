@@ -19,7 +19,7 @@
         </table>
       </div>
       <div class="actions">
-        <button @click="close">关闭</button>
+        <button @click="close">{{ t('mx.close') }}</button>
       </div>
     </div>
   </div>
@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { algoRunner } from '../algorithms/runner'
+import { t } from '../i18n'
 
 function close() {
   algoRunner.matrix.value = null

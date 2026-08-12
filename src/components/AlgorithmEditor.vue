@@ -1,26 +1,26 @@
 <template>
   <div class="section algo-editor">
     <div class="head">
-      <h3>自定义算法</h3>
-      <button class="primary" :disabled="running" @click="run">运行</button>
+      <h3>{{ t('ce.title') }}</h3>
+      <button class="primary" :disabled="running" @click="run">{{ t('ce.run') }}</button>
     </div>
     <div class="row between">
-      <input v-model="name" class="input name-input" placeholder="算法名称" />
-      <button @click="save">保存</button>
+      <input v-model="name" class="input name-input" :placeholder="t('ce.namePlaceholder')" />
+      <button @click="save">{{ t('ce.save') }}</button>
     </div>
     <select v-model="selectedKey" class="select" @change="applySelected">
-      <option value="">选择模板 / 已保存算法</option>
-      <optgroup label="模板">
-        <option v-for="t in templates" :key="t.id" :value="`t:${t.id}`">{{ t.name }}</option>
+      <option value="">{{ t('ce.selectPlaceholder') }}</option>
+      <optgroup :label="t('ce.grpTemplates')">
+        <option v-for="tpl in templates" :key="tpl.id" :value="`t:${tpl.id}`">{{ t(tpl.nameKey) }}</option>
       </optgroup>
-      <optgroup label="已保存">
+      <optgroup :label="t('ce.grpSaved')">
         <option v-for="a in savedAlgos" :key="a.id" :value="`s:${a.id}`">{{ a.name }}</option>
       </optgroup>
     </select>
     <div ref="editorEl" class="cm-host"></div>
     <div class="row between foot">
-      <span class="dim">{{ currentSaved ? '已保存' : '草稿（未保存）' }}</span>
-      <button v-if="currentSaved" @click="del">删除</button>
+      <span class="dim">{{ currentSaved ? t('ce.saved') : t('ce.draft') }}</span>
+      <button v-if="currentSaved" @click="del">{{ t('ce.del') }}</button>
     </div>
   </div>
 </template>
@@ -36,6 +36,7 @@ import { algoRunner } from '../algorithms/runner'
 import { createGraphAPI } from '../algorithms/graphAPI'
 import { ALGO_TEMPLATES } from '../algorithms/templates'
 import { themeName } from '../store/theme'
+import { t } from '../i18n'
 
 interface SavedAlgo {
   id: string
@@ -101,12 +102,12 @@ function buildEditor(doc: string) {
 function applySelected() {
   const key = selectedKey.value
   if (key.startsWith('t:')) {
-    const t = templates.find((x) => x.id === key.slice(2))
-    if (!t) return
-    code.value = t.code
-    name.value = t.name
+    const tpl = templates.find((x) => x.id === key.slice(2))
+    if (!tpl) return
+    code.value = tpl.code
+    name.value = t(tpl.nameKey)
     currentSavedId.value = null
-    buildEditor(t.code)
+    buildEditor(tpl.code)
   } else if (key.startsWith('s:')) {
     const a = savedAlgos.value.find((x) => x.id === key.slice(2))
     if (!a) return
@@ -149,14 +150,14 @@ function run() {
       return fn(G, api)
     })
   } catch (err) {
-    algoRunner.logs.value.push(`编译错误: ${String(err)}`)
+    algoRunner.logs.value.push(t('ce.compileError', { msg: String(err) }))
   }
 }
 
 watch(themeName, () => buildEditor(code.value))
 
 onMounted(() => {
-  buildEditor(code.value || '// 在此编写你的算法，点击"运行"执行')
+  buildEditor(code.value || t('ce.placeholderCode'))
 })
 
 onBeforeUnmount(() => {
